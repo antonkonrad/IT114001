@@ -12,6 +12,12 @@ public class NumberGuesserHW {
 	private int number = 0;
 	private boolean isRunning = false;
 	final String saveFile = "numberGuesserSave.txt";
+	// added these variables
+	private int winner = 0;
+	private int loser = 0;
+	private int played = 0;
+	private int lives = 5;
+	private String endGame = "quit";
 
 	/***
 	 * Gets a random number between 1 and level.
@@ -27,28 +33,47 @@ public class NumberGuesserHW {
 
 	private void win() {
 		System.out.println("That's right!");
+		// used variables here
+		winner++;
+		played++;
 		level++;// level up!
 		saveLevel();
 		strikes = 0;
 		System.out.println("Welcome to level " + level);
+		// added these statements
+		System.out.println("You have " + lives + " lives left");
+		System.out.println("You have played " + played + " game(s) and won " + winner + " game(s).");
 		number = getNumber(level);
+
 	}
 
 	private void lose() {
 		System.out.println("Uh oh, looks like you need to get some more practice.");
 		System.out.println("The correct number was " + number);
+		// added variables and if statement here
+		lives--; // this vaiable and this statment
+		System.out.println("You have " + lives + " lives left.");
+		if (lives < 1) {
+			System.out.println("Game Over, You have " + lives + " lives left.");
+			processCommands(endGame);
+		}
+		loser++; //
+		played++; //
 		strikes = 0;
 		level--;
 		if (level < 1) {
 			level = 1;
 		}
 		saveLevel();
+		// added this statement
+		System.out.println("You have played " + played + " game(s) and lost " + loser + " game(s).");
 		number = getNumber(level);
+
 	}
 
 	private void processCommands(String message) {
 		if (message.equalsIgnoreCase("quit")) {
-			System.out.println("Tired of playing? No problem, see you next time.");
+			System.out.println("See you next time."); // changed the string statement
 			isRunning = false;
 		}
 	}

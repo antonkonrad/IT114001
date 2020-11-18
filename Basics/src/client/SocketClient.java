@@ -108,6 +108,31 @@ public class SocketClient {
 				event.onChangeRoom();
 			}
 			break;
+		case PLACE:
+			if (event != null) {
+
+			}
+			break;
+		case PICK:
+			if (event != null) {
+
+			}
+			break;
+		case HIT:
+			if (event != null) {
+
+			}
+			break;
+		case MISS:
+			if (event != null) {
+
+			}
+			break;
+		case TURN:
+			if (event != null) {
+
+			}
+			break;
 		default:
 			log.log(Level.WARNING, "unhandled payload on client" + p);
 			break;

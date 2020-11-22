@@ -1,5 +1,6 @@
 package server;
 
+import java.awt.Point;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -73,6 +74,14 @@ public class ServerThread extends Thread {
 		payload.setClientName(clientName);
 		payload.setMessage(message);
 
+		return sendPayload(payload);
+	}
+
+	protected boolean sendPosition(String clientName, Point pos) {
+		Payload payload = new Payload();
+		payload.setPayloadType(PayloadType.SYNC_POSITION);
+		payload.setClientName(clientName);
+		payload.setPoint(pos);
 		return sendPayload(payload);
 	}
 
@@ -150,12 +159,10 @@ public class ServerThread extends Thread {
 		case TURN:
 
 			break;
-		case X_POS:
-
+		case SYNC_POSITION:
+			// this will be handled 100% by the server
 			break;
-		case Y_POS:
 
-			break;
 		case PLAYER_ID:
 
 			break;

@@ -135,6 +135,30 @@ public class ServerThread extends Thread {
 			// we currently don't need to do anything since the UI/Client won't be sending
 			// this
 			break;
+		case PLACE:
+
+			break;
+		case PICK:
+
+			break;
+		case HIT:
+
+			break;
+		case MISS:
+
+			break;
+		case TURN:
+
+			break;
+		case X_POS:
+
+			break;
+		case Y_POS:
+
+			break;
+		case PLAYER_ID:
+
+			break;
 		default:
 			log.log(Level.INFO, "Unhandled payload on server: " + p);
 			break;

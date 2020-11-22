@@ -133,6 +133,21 @@ public class SocketClient {
 
 			}
 			break;
+		case X_POS:
+			if (event != null) {
+
+			}
+			break;
+		case Y_POS:
+			if (event != null) {
+
+			}
+			break;
+		case PLAYER_ID:
+			if (event != null) {
+
+			}
+			break;
 		default:
 			log.log(Level.WARNING, "unhandled payload on client" + p);
 			break;

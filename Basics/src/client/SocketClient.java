@@ -1,27 +1,33 @@
 package client;
 
+import java.awt.Point;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import server.Payload;
 import server.PayloadType;
 
-//part 7
-public class SocketClient {
+public enum SocketClient {
+	INSTANCE; // see https://dzone.com/articles/java-singletons-using-enum "Making Singletons
+	// with Enum"
+
 	private static Socket server;
 	private static Thread fromServerThread;
 	private static Thread clientThread;
 	private static String clientName;
 	private static ObjectOutputStream out;
 	private final static Logger log = Logger.getLogger(SocketClient.class.getName());
-	private static Event event;
+	private static List<Event> events = new ArrayList<Event>();// change from event to list<event>
 
-	private static Payload buildMessage(String message) {
+	private Payload buildMessage(String message) {
 		Payload payload = new Payload();
 		payload.setPayloadType(PayloadType.MESSAGE);
 		payload.setClientName(clientName);
@@ -29,7 +35,7 @@ public class SocketClient {
 		return payload;
 	}
 
-	private static Payload buildConnectionStatus(String name, boolean isConnect) {
+	private Payload buildConnectionStatus(String name, boolean isConnect) {
 		Payload payload = new Payload();
 		if (isConnect) {
 			payload.setPayloadType(PayloadType.CONNECT);
@@ -40,7 +46,7 @@ public class SocketClient {
 		return payload;
 	}
 
-	private static void sendPayload(Payload p) {
+	private void sendPayload(Payload p) {
 		try {
 			out.writeObject(p);
 		} catch (IOException e) {
@@ -49,7 +55,7 @@ public class SocketClient {
 		}
 	}
 
-	private static void listenForServerMessage(ObjectInputStream in) {
+	private void listenForServerMessage(ObjectInputStream in) {
 		if (fromServerThread != null) {
 			log.log(Level.INFO, "Server Listener is likely already running");
 			return;
@@ -80,32 +86,174 @@ public class SocketClient {
 		fromServerThread.start();// start the thread
 	}
 
+	private void sendOnClientConnect(String name, String message) {
+		Iterator<Event> iter = events.iterator();
+		while (iter.hasNext()) {
+			Event e = iter.next();
+			if (e != null) {
+				e.onClientConnect(name, message);
+			}
+		}
+	}
+
+	private void sendOnClientDisconnect(String name, String message) {
+		Iterator<Event> iter = events.iterator();
+		while (iter.hasNext()) {
+			Event e = iter.next();
+			if (e != null) {
+				e.onClientDisconnect(name, message);
+			}
+		}
+	}
+
+	private void sendOnMessage(String name, String message) {
+		Iterator<Event> iter = events.iterator();
+		while (iter.hasNext()) {
+			Event e = iter.next();
+			if (e != null) {
+				e.onMessageReceive(name, message);
+			}
+		}
+	}
+
+	private void sendOnChangeRoom() {
+		Iterator<Event> iter = events.iterator();
+		while (iter.hasNext()) {
+			Event e = iter.next();
+			if (e != null) {
+				e.onChangeRoom();
+			}
+		}
+	}
+
+	private void sendSyncDirection(String clientName, Point direction) {
+		Iterator<Event> iter = events.iterator();
+		while (iter.hasNext()) {
+			Event e = iter.next();
+			if (e != null) {
+				e.onSyncDirection(clientName, direction);
+			}
+		}
+	}
+
+	private void sendSyncPosition(String clientName, Point position) {
+		Iterator<Event> iter = events.iterator();
+		while (iter.hasNext()) {
+			Event e = iter.next();
+			if (e != null) {
+				e.onSyncPosition(clientName, position);
+			}
+		}
+	}
+
+	private void sendRoom(String roomName) {
+		Iterator<Event> iter = events.iterator();
+		while (iter.hasNext()) {
+			Event e = iter.next();
+			if (e != null) {
+				e.onGetRoom(roomName);
+			}
+		}
+	}
+
+	private void sendSize(Point p) {
+		Iterator<Event> iter = events.iterator();
+		while (iter.hasNext()) {
+			Event e = iter.next();
+			if (e != null) {
+				e.onResize(p);
+			}
+		}
+	}
+
+	private void sendChair(String name, Point position, Point dimension, boolean flag) {
+		Iterator<Event> iter = events.iterator();
+		while (iter.hasNext()) {
+			Event e = iter.next();
+			if (e != null) {
+				e.onGetChair(name, position, dimension, flag);
+
+			}
+		}
+	}
+
+	private void sendResetChairs() {
+		Iterator<Event> iter = events.iterator();
+		while (iter.hasNext()) {
+			Event e = iter.next();
+			if (e != null) {
+				e.onResetChairs();
+			}
+		}
+	}
+
+	private void sendTicket(String name, Point position, Point dimension, boolean flag) {
+		Iterator<Event> iter = events.iterator();
+		while (iter.hasNext()) {
+			Event e = iter.next();
+			if (e != null) {
+				e.onGetTicket(name, position, dimension, flag);
+			}
+		}
+	}
+
+	private void sendResetTickets() {
+		Iterator<Event> iter = events.iterator();
+		while (iter.hasNext()) {
+			Event e = iter.next();
+			if (e != null) {
+				e.onResetTickets();
+			}
+		}
+	}
+
 	/***
 	 * Determine any special logic for different PayloadTypes
 	 * 
 	 * @param p
 	 */
-	private static void processPayload(Payload p) {
+	private void processPayload(Payload p) {
 
 		switch (p.getPayloadType()) {
 		case CONNECT:
-			if (event != null) {
-				event.onClientConnect(p.getClientName(), p.getMessage());
-			}
+			sendOnClientConnect(p.getClientName(), p.getMessage());
 			break;
 		case DISCONNECT:
-			if (event != null) {
-				event.onClientDisconnect(p.getClientName(), p.getMessage());
-			}
+			sendOnClientDisconnect(p.getClientName(), p.getMessage());
 			break;
 		case MESSAGE:
-			if (event != null) {
-				event.onMessageReceive(p.getClientName(), p.getMessage());
-			}
+			sendOnMessage(p.getClientName(), p.getMessage());
 			break;
 		case CLEAR_PLAYERS:
-			if (event != null) {
-				event.onChangeRoom();
+			sendOnChangeRoom();
+			break;
+		case SYNC_DIRECTION:
+			sendSyncDirection(p.getClientName(), p.getPoint());
+			break;
+		case SYNC_POSITION:
+			sendSyncPosition(p.getClientName(), p.getPoint());
+			break;
+		case GET_ROOMS:
+			// reply from ServerThread
+			sendRoom(p.getMessage());
+			break;
+		case SYNC_GAME_SIZE:
+			sendSize(p.getPoint());
+			break;
+		case SYNC_CHAIR:
+			// we'll use null to reset and not null to add
+			if (p.getMessage() != null) {
+				sendChair(p.getMessage(), p.getPoint(), p.getPoint2(), p.getFlag());
+			} else {
+				sendResetChairs();
+			}
+			break;
+		case SYNC_TICKET:
+			// we'll use null to reset and not null to add
+			if (p.getMessage() != null) {
+				sendTicket(p.getMessage(), p.getPoint(), p.getPoint2(), p.getFlag());
+			} else {
+				sendResetTickets();
 			}
 			break;
 		default:
@@ -116,19 +264,24 @@ public class SocketClient {
 	}
 
 	// TODO Start public methods here
-	public static void callbackListener(Event e) {
-		event = e;
+
+	public void registerCallbackListener(Event e) {
+		events.add(e);
 		log.log(Level.INFO, "Attached listener");
 	}
 
-	public static boolean connectAndStart(String address, String port) throws IOException {
+	public void removeCallbackListener(Event e) {
+		events.remove(e);
+	}
+
+	public boolean connectAndStart(String address, String port) throws IOException {
 		if (connect(address, port)) {
 			return start();
 		}
 		return false;
 	}
 
-	public static boolean connect(String address, String port) {
+	public boolean connect(String address, String port) {
 		try {
 			server = new Socket(address, Integer.parseInt(port));
 			log.log(Level.INFO, "Client connected");
@@ -141,16 +294,60 @@ public class SocketClient {
 		return false;
 	}
 
-	public static void setUsername(String username) {
+	public void setUsername(String username) {
 		clientName = username;
 		sendPayload(buildConnectionStatus(clientName, true));
 	}
 
-	public static void sendMessage(String message) {
+	public void sendMessage(String message) {
 		sendPayload(buildMessage(message));
 	}
 
-	public static boolean start() throws IOException {
+	public void sendCreateRoom(String room) {
+		Payload p = new Payload();
+		p.setPayloadType(PayloadType.CREATE_ROOM);
+		p.setMessage(room);
+		sendPayload(p);
+	}
+
+	public void sendJoinRoom(String room) {
+		Payload p = new Payload();
+		p.setPayloadType(PayloadType.JOIN_ROOM);
+		p.setMessage(room);
+		sendPayload(p);
+	}
+
+	public void sendGetRooms(String query) {
+		Payload p = new Payload();
+		p.setPayloadType(PayloadType.GET_ROOMS);
+		p.setMessage(query);
+		sendPayload(p);
+	}
+
+	/**
+	 * Sends desired to change direction to server
+	 * 
+	 * @param dir
+	 */
+	public void syncDirection(Point dir) {
+		Payload p = new Payload();
+		// no need to add clientName here since ServerThread has the info
+		// so let's save a few bytes
+		p.setPayloadType(PayloadType.SYNC_DIRECTION);
+		p.setPoint(dir);
+		sendPayload(p);
+	}
+
+	/**
+	 * we won't be syncing position from the client since our server is the one
+	 * that'll do it so creating this unused method as a reminder not to use/make it
+	 */
+	@Deprecated
+	public void syncPosition() {
+		log.log(Level.SEVERE, "My sample doesn't use this");
+	}
+
+	public boolean start() throws IOException {
 		if (server == null) {
 			log.log(Level.WARNING, "Server is null");
 			return false;
@@ -194,7 +391,7 @@ public class SocketClient {
 		return true;
 	}
 
-	public static void close() {
+	public void close() {
 		if (server != null && !server.isClosed()) {
 			try {
 				server.close();

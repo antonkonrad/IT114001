@@ -1,4 +1,3 @@
-
 package client;
 
 public interface Event {

@@ -1,6 +1,5 @@
 package server;
 
-import java.awt.Point;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -77,14 +76,6 @@ public class ServerThread extends Thread {
 		return sendPayload(payload);
 	}
 
-	protected boolean sendPosition(String clientName, Point pos) {
-		Payload payload = new Payload();
-		payload.setPayloadType(PayloadType.SYNC_POSITION);
-		payload.setClientName(clientName);
-		payload.setPoint(pos);
-		return sendPayload(payload);
-	}
-
 	protected boolean sendConnectionStatus(String clientName, boolean isConnect, String message) {
 		Payload payload = new Payload();
 		if (isConnect) {
@@ -143,28 +134,6 @@ public class ServerThread extends Thread {
 		case CLEAR_PLAYERS:
 			// we currently don't need to do anything since the UI/Client won't be sending
 			// this
-			break;
-		case PLACE:
-
-			break;
-		case PICK:
-
-			break;
-		case HIT:
-
-			break;
-		case MISS:
-
-			break;
-		case TURN:
-
-			break;
-		case SYNC_POSITION:
-			// this will be handled 100% by the server
-			break;
-
-		case PLAYER_ID:
-
 			break;
 		default:
 			log.log(Level.INFO, "Unhandled payload on server: " + p);

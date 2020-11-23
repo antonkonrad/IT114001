@@ -1,14 +1,10 @@
 package client;
 
-import java.awt.Point;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -23,8 +19,7 @@ public class SocketClient {
 	private static String clientName;
 	private static ObjectOutputStream out;
 	private final static Logger log = Logger.getLogger(SocketClient.class.getName());
-	private static List<Event> events = new ArrayList<Event>();// change from event to list<event> //private static
-																// Event event;
+	private static Event event;
 
 	private static Payload buildMessage(String message) {
 		Payload payload = new Payload();
@@ -85,16 +80,6 @@ public class SocketClient {
 		fromServerThread.start();// start the thread
 	}
 
-	private void sendSyncPosition(String clientName, Point position) {
-		Iterator<Event> iter = events.iterator();
-		while (iter.hasNext()) {
-			Event e = iter.next();
-			if (e != null) {
-				e.onSyncPosition(clientName, position);
-			}
-		}
-	}
-
 	/***
 	 * Determine any special logic for different PayloadTypes
 	 * 
@@ -121,41 +106,6 @@ public class SocketClient {
 		case CLEAR_PLAYERS:
 			if (event != null) {
 				event.onChangeRoom();
-			}
-			break;
-		case PLACE:
-			if (event != null) {
-
-			}
-			break;
-		case PICK:
-			if (event != null) {
-
-			}
-			break;
-		case HIT:
-			if (event != null) {
-
-			}
-			break;
-		case MISS:
-			if (event != null) {
-
-			}
-			break;
-		case TURN:
-			if (event != null) {
-
-			}
-			break;
-		case SYNC_POSITION:
-			sendSyncPosition(p.getClientName(), p.getPoint());
-
-			break;
-
-		case PLAYER_ID:
-			if (event != null) {
-
 			}
 			break;
 		default:
@@ -198,15 +148,6 @@ public class SocketClient {
 
 	public static void sendMessage(String message) {
 		sendPayload(buildMessage(message));
-	}
-
-	/**
-	 * we won't be syncing position from the client since our server is the one
-	 * that'll do it so creating this unused method as a reminder not to use/make it
-	 */
-	@Deprecated
-	public void syncPosition() {
-		log.log(Level.SEVERE, "My sample doesn't use this");
 	}
 
 	public static boolean start() throws IOException {

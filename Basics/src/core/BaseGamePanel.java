@@ -1,106 +1,165 @@
 package core;
 
+import java.awt.Dimension;
 import java.awt.Graphics;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.awt.Point;
+import java.io.Serializable;
 
-import javax.swing.JPanel;
-
-public abstract class BaseGamePanel extends JPanel {
+public abstract class GameObject implements Serializable {
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = 5L;
-	// flag used to terminate game loop
-	protected boolean isRunning = false;
-	// thread sleep time in ms (16 ms is approx 60 frames per second)
-	public int SLEEP = 16;
-	BaseGamePanel bgp;
-	// when true, disables certain triggers the server version doesn't need
-	public boolean isServer = false;
-	// by setting this we can have the instance awake() but not start until
-	// startGameLoop() is called
-	public boolean delayGameLoop = false;
-	private final static Logger log = Logger.getLogger(BaseGamePanel.class.getName());
-	Thread gameLoop;
+	private static final long serialVersionUID = -9145932773417678588L;
+	protected Point position = new Point(0, 0);
+	protected Point previousPosition = new Point(0, 0);
+	protected Point speed = new Point(2, 2);
+	protected Point direction = new Point(0, 0);
+	protected Dimension size = new Dimension(25, 25);
+	protected String name = "";
+	protected boolean isActive = true;
 
-	// constructor triggers the various events
-	public BaseGamePanel() {
-		awake();
-		bgp = this;
-		if (!delayGameLoop) {
-			startGameLoop();
+	/**
+	 * Set the x,y speed of the object, values can only be positive. Set -1 to
+	 * ignore speed change for that dimension. A value of 0 would stop this object
+	 * from moving on that dimension Use setDirection for changes in direction
+	 * 
+	 * @param x
+	 * @param y
+	 */
+	public void setSpeed(int x, int y) {
+		// not using Math.max here since we want to be able to ignore a speed dimension
+		// Math.max would set it to a value
+		if (x > -1) {
+			speed.x = x;
+		}
+		if (y > -1) {
+			speed.y = y;
 		}
 	}
 
-	public BaseGamePanel(boolean delay) {
-		delayGameLoop = delay;
-		awake();
-		bgp = this;
-		if (!delayGameLoop) {
-			startGameLoop();
+	/**
+	 * Sets the dimensions of the object
+	 * 
+	 * @param width
+	 * @param height
+	 */
+	public void setSize(int width, int height) {
+		size.width = Math.max(0, width);
+		size.height = Math.max(0, height);
+	}
+
+	public Dimension getSize() {
+		return size;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getName() {
+		return this.name;
+	}
+
+	/**
+	 * Enable or disable object
+	 * 
+	 * @param isActive
+	 */
+	public void setActive(boolean isActive) {
+		this.isActive = isActive;
+	}
+
+	public boolean isActive() {
+		return this.isActive;
+	}
+
+	/**
+	 * Call to apply speed/direction to position
+	 */
+	public void move() {
+		if (!isActive) {
+			return;
 		}
+		previousPosition.x = position.x;
+		previousPosition.y = position.y;
+		position.x += (speed.x * direction.x);
+		position.y += (speed.y * direction.y);
 	}
 
-	// made it public in case there was a decision to use delayGameLoop = true
-	public void startGameLoop() {
-		if (gameLoop == null) {
-			isRunning = true;
-			gameLoop = new Thread() {
-				@Override
-				public void run() {
-					bgp.start();
-					if (!isServer) {
-						bgp.attachListeners();
-					}
-					while (isRunning) {
-						bgp.update();
-						bgp.lateUpdate();
-						if (!isServer) {
-							bgp.repaint();
-						}
-
-						// give it some rest
-						try {
-							Thread.sleep(SLEEP);
-						} catch (InterruptedException e) {
-							e.printStackTrace();
-						}
-					}
-					log.log(Level.INFO, "game loop terminated");
-					bgp.quit();
-				}
-			};
-			gameLoop.start();
+	/***
+	 * Sets the direction of this object. Use the return value to determine if a
+	 * network request should sync
+	 * 
+	 * @param x
+	 * @param y
+	 * @return returns true if changed, false if it's the same.
+	 */
+	public boolean setDirection(int x, int y) {
+		x = Helpers.clamp(x, -1, 1);
+		y = Helpers.clamp(y, -1, 1);
+		boolean changed = false;
+		if (direction.x != x) {
+			direction.x = x;
+			changed = true;
 		}
+		if (direction.y != y) {
+			direction.y = y;
+			changed = true;
+		}
+		return changed;
 	}
 
-	// called when new instance is created
-	public abstract void awake();
-
-	// called when thread is started
-	public abstract void start();
-
-	// called every frame
-	public abstract void update();
-
-	// called every frame after update has been called
-	public abstract void lateUpdate();
-
-	// called every frame if !isServer
-	public abstract void draw(Graphics g);
-
-	// called when loop exits
-	public abstract void quit();
-
-	// triggers the draw method
-	@Override
-	public void paintComponent(Graphics g) {
-		super.paintComponent(g); // paint parent's background
-		draw(g);
+	public Point getDirection() {
+		return direction;
 	}
 
-	// forces subclasses to determine listeners
-	public abstract void attachListeners();
+	/**
+	 * Instantly sets a position
+	 * 
+	 * @param position
+	 */
+	public void setPosition(Point position) {
+		previousPosition.x = position.x;
+		previousPosition.y = position.y;
+		this.position.x = position.x;
+		this.position.y = position.y;
+	}
 
+	public Point getPosition() {
+		return position;
+	}
+
+	/***
+	 * Generates a new point representing the center of the object. Safe to edit.
+	 * 
+	 * @return
+	 */
+	public Point getCenter() {
+		Point p = (Point) position.clone();
+		p.x += size.width * .5;
+		p.y += size.height * .5;
+		return p;
+	}
+
+	/**
+	 * Checks if previous position differs from current position
+	 * 
+	 * @return
+	 */
+	public boolean changedPosition() {
+		return (previousPosition.x != position.x || previousPosition.y != position.y);
+	}
+
+	/**
+	 * use to determine if subclass should draw due to active status
+	 * 
+	 * @param g
+	 * @return
+	 */
+	public boolean draw(Graphics g) {
+		if (!isActive) {
+			return false;
+		}
+		return true;
+	}
 }

@@ -9,6 +9,7 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.RenderingHints;
 import java.awt.Stroke;
+import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -18,6 +19,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
 import javax.swing.InputMap;
 import javax.swing.KeyStroke;
@@ -94,6 +96,8 @@ public class GamePanel extends BaseGamePanel implements Event {
 
 	@Override
 	public void onChangeRoom() {
+		onResetChairs();
+		onResetTickets();
 		// don't clear, since we're using iterators to loop, remove via iterator
 		// players.clear();
 		Iterator<Player> iter = players.iterator();
@@ -101,6 +105,7 @@ public class GamePanel extends BaseGamePanel implements Event {
 			iter.next();
 			iter.remove();
 		}
+
 		myPlayer = null;
 		System.out.println("Cleared players");
 	}
@@ -138,23 +143,27 @@ public class GamePanel extends BaseGamePanel implements Event {
 	 */
 	private void applyControls() {
 		if (myPlayer != null) {
+
 			int x = 0, y = 0;
-			if (KeyStates.W) {
-				y = -1;
-			}
-			if (KeyStates.S) {
-				y = 1;
-			}
-			if (!KeyStates.W && !KeyStates.S) {
-				y = 0;
-			}
-			if (KeyStates.A) {
-				x = -1;
-			} else if (KeyStates.D) {
-				x = 1;
-			}
-			if (!KeyStates.A && !KeyStates.D) {
-				x = 0;
+			// block input if we're sitting
+			if (!myPlayer.isSitting()) {
+				if (KeyStates.W) {
+					y = -1;
+				}
+				if (KeyStates.S) {
+					y = 1;
+				}
+				if (!KeyStates.W && !KeyStates.S) {
+					y = 0;
+				}
+				if (KeyStates.A) {
+					x = -1;
+				} else if (KeyStates.D) {
+					x = 1;
+				}
+				if (!KeyStates.A && !KeyStates.D) {
+					x = 0;
+				}
 			}
 			boolean changed = myPlayer.setDirection(x, y);
 			if (changed) {
@@ -261,6 +270,9 @@ public class GamePanel extends BaseGamePanel implements Event {
 		im.put(KeyStroke.getKeyStroke(KeyEvent.VK_A, 0, true), "left_released");
 		im.put(KeyStroke.getKeyStroke(KeyEvent.VK_D, 0, false), "right_pressed");
 		im.put(KeyStroke.getKeyStroke(KeyEvent.VK_D, 0, true), "right_released");
+		// added spacebar
+		im.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0, false), "space_pressed");
+		// im.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0, true), "space_released");
 		ActionMap am = this.getRootPane().getActionMap();
 
 		am.put("up_pressed", new MoveAction(KeyEvent.VK_W, true));
@@ -274,6 +286,33 @@ public class GamePanel extends BaseGamePanel implements Event {
 
 		am.put("right_pressed", new MoveAction(KeyEvent.VK_D, true));
 		am.put("right_released", new MoveAction(KeyEvent.VK_D, false));
+
+		// added spacebar
+		am.put("space_pressed", new AbstractAction() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				// TODO Auto-generated method stub
+				if (myPlayer != null && !myPlayer.isSitting()) {
+					if (myPlayer.getLastAction() < 0L || myPlayer.getTimeBetweenLastAction(e.getWhen()) >= 500) {
+						myPlayer.setLastAction(e.getWhen());
+						System.out.println("Sending action " + myPlayer.getLastAction());
+						SocketClient.INSTANCE.syncPickupTicket();
+					}
+				}
+			}
+
+		});
+		/*
+		 * am.put("space_released", new AbstractAction() {
+		 * 
+		 * @Override public void actionPerformed(ActionEvent e) { // TODO Auto-generated
+		 * method stub
+		 * 
+		 * }
+		 * 
+		 * });
+		 */
 	}
 
 	@Override
@@ -282,10 +321,10 @@ public class GamePanel extends BaseGamePanel implements Event {
 		while (iter.hasNext()) {
 			Player p = iter.next();
 			if (p != null && p.getName().equalsIgnoreCase(clientName)) {
-				System.out.println("Syncing direction: " + clientName);
+				// System.out.println("Syncing direction: " + clientName);
 				p.setDirection(direction.x, direction.y);
-				System.out.println("From: " + direction);
-				System.out.println("To: " + p.getDirection());
+				// System.out.println("From: " + direction);
+				// System.out.println("To: " + p.getDirection());
 				break;
 			}
 		}
@@ -298,7 +337,7 @@ public class GamePanel extends BaseGamePanel implements Event {
 		while (iter.hasNext()) {
 			Player p = iter.next();
 			if (p != null && p.getName().equalsIgnoreCase(clientName)) {
-				System.out.println(clientName + " set " + position);
+				// System.out.println(clientName + " set " + position);
 				p.setPosition(position);
 				break;
 			}
@@ -325,10 +364,10 @@ public class GamePanel extends BaseGamePanel implements Event {
 	}
 
 	@Override
-	public void onGetChair(String chairName, Point position, Point dimension, boolean isAvailable) {
+	public void onGetChair(String chairName, Point position, Point dimension, String sitter) {
 		// TODO Auto-generated method stub
 		boolean exists = false;
-		System.out.println("Available " + (isAvailable ? "true" : "false"));
+		System.out.println("Available " + (sitter != null ? "true" : "false"));
 		Iterator<Chair> iter = chairs.iterator();
 		while (iter.hasNext()) {
 			Chair c = iter.next();
@@ -336,10 +375,15 @@ public class GamePanel extends BaseGamePanel implements Event {
 				exists = true;
 				// for now will fill in player as empty player so it's !null
 				// the player set only matters for the server
-				if (isAvailable) {
+				Player p = c.getSitter();
+				if (p != null) {
+					p.unsit();
+				}
+				if (sitter == null) {
+
 					c.setPlayer(null);
 				} else {
-					c.setPlayer(new Player());
+					setSitter(c, sitter);
 				}
 				break;
 			}
@@ -348,10 +392,10 @@ public class GamePanel extends BaseGamePanel implements Event {
 			Chair c = new Chair(chairName);
 			c.setPosition(position);
 			c.setSize(dimension.x, dimension.y);
-			if (isAvailable) {
+			if (sitter == null) {
 				c.setPlayer(null);
 			} else {
-				c.setPlayer(new Player());
+				setSitter(c, sitter);
 			}
 			chairs.add(c);
 		}
@@ -363,13 +407,44 @@ public class GamePanel extends BaseGamePanel implements Event {
 		Iterator<Chair> iter = chairs.iterator();
 		while (iter.hasNext()) {
 			Chair c = iter.next();
+			Player p = c.getSitter();
+			if (p != null) {
+				p.unsit();
+			}
 			c.setPlayer(null);
 			iter.remove();
 		}
 	}
 
+	void setSitter(Chair c, String sitter) {
+		Iterator<Player> piter = players.iterator();
+		while (piter.hasNext()) {
+			Player p = piter.next();
+			if (p != null && p.getName().equalsIgnoreCase(sitter)) {
+				c.setPlayer(p);
+				p.setChair(c);
+				break;
+			}
+		}
+	}
+
+	void setHolder(Ticket t, String holder) {
+		Iterator<Player> piter = players.iterator();
+		while (piter.hasNext()) {
+			Player p = piter.next();
+			if (p != null && p.getName().equalsIgnoreCase(holder)) {
+				System.out.println("Set player holder to " + p.getName());
+				p.setTicket(t);
+				t.setPlayer(p);
+
+				break;
+			}
+		}
+	}
+
 	@Override
-	public void onGetTicket(String ticketName, Point position, Point dimension, boolean isAvailable) {
+	public void onGetTicket(String ticketName, Point position, Point dimension, String holder) {// boolean isAvailable)
+		// {
 		// TODO Auto-generated method stub
 		boolean exists = false;
 		Iterator<Ticket> iter = tickets.iterator();
@@ -379,10 +454,14 @@ public class GamePanel extends BaseGamePanel implements Event {
 				exists = true;
 				// for now will fill in player as empty player so it's !null
 				// the player set only matters for the server
-				if (isAvailable) {
+				if (holder == null) {
+					if (!t.isAvailable()) {
+						// remove ticket from player
+						Ticket h = t.getHolder().takeTicket();
+					}
 					t.setPlayer(null);
 				} else {
-					t.setPlayer(new Player());
+					setHolder(t, holder);
 				}
 				break;
 			}
@@ -391,11 +470,7 @@ public class GamePanel extends BaseGamePanel implements Event {
 			Ticket t = new Ticket(ticketName);
 			t.setPosition(position);
 			t.setSize(dimension.x, dimension.y);
-			if (isAvailable) {
-				t.setPlayer(null);
-			} else {
-				t.setPlayer(new Player());
-			}
+			setHolder(t, holder);
 			tickets.add(t);
 		}
 	}

@@ -115,6 +115,13 @@ public class ClientUI extends JFrame implements Event {
 			}
 
 		});
+		// TODO set focus later
+		host.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "sendAction");
+		host.getActionMap().put("sendAction", new AbstractAction() {
+			public void actionPerformed(ActionEvent actionEvent) {
+				button.doClick();
+			}
+		});
 		panel.add(button);
 		this.add(panel, "login");
 	}
@@ -147,6 +154,13 @@ public class ClientUI extends JFrame implements Event {
 				}
 			}
 
+		});
+		// TODO set focus later
+		username.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "sendAction");
+		username.getActionMap().put("sendAction", new AbstractAction() {
+			public void actionPerformed(ActionEvent actionEvent) {
+				button.doClick();
+			}
 		});
 		panel.add(button);
 		this.add(panel, "details");
@@ -271,6 +285,7 @@ public class ClientUI extends JFrame implements Event {
 
 	void addMessage(String str) {
 		JEditorPane entry = new JEditorPane();
+		entry.setContentType("text/html");
 		entry.setEditable(false);
 		// entry.setLayout(null);
 		entry.setText(str);
@@ -327,10 +342,12 @@ public class ClientUI extends JFrame implements Event {
 			SocketClient.INSTANCE.sendGetRooms(null);
 			break;
 		default:
+
 			// no need to react
 			break;
 		}
 		card.show(this.getContentPane(), panel);
+
 	}
 
 	void connect(String host, String port) throws IOException {
@@ -425,7 +442,7 @@ public class ClientUI extends JFrame implements Event {
 	}
 
 	@Override
-	public void onGetChair(String chairName, Point position, Point dimension, boolean flag) {
+	public void onGetChair(String chairName, Point position, Point dimension, String flag) {
 		// TODO Auto-generated method stub
 
 	}
@@ -437,7 +454,7 @@ public class ClientUI extends JFrame implements Event {
 	}
 
 	@Override
-	public void onGetTicket(String ticketName, Point position, Point dimension, boolean flag) {
+	public void onGetTicket(String ticketName, Point position, Point dimension, String holder) {
 		// TODO Auto-generated method stub
 
 	}

@@ -123,7 +123,7 @@ public class ServerThread extends Thread {
 		return sendPayload(payload);
 	}
 
-	protected boolean sendChair(String chairName, Point chairPosition, Dimension chairSize, boolean isAvailable) {
+	protected boolean sendChair(String chairName, Point chairPosition, Dimension chairSize, String sitter) {
 		Payload payload = new Payload();
 		payload.setPayloadType(PayloadType.SYNC_CHAIR);
 		payload.setMessage(chairName);
@@ -133,13 +133,15 @@ public class ServerThread extends Thread {
 		if (chairSize != null) {
 			payload.setPoint2(new Point(chairSize.width, chairSize.height));
 		}
-		payload.setFlag(isAvailable);
+		payload.setClientName(sitter);
 		return sendPayload(payload);
 	}
 
-	protected boolean sendTicket(String ticketName, Point ticketPosition, Dimension ticketSize, boolean isAvailable) {
+	// updated boolean isAvailable to String of holder (or null)
+	protected boolean sendTicket(String ticketName, Point ticketPosition, Dimension ticketSize, String holder) {
 		Payload payload = new Payload();
 		payload.setPayloadType(PayloadType.SYNC_TICKET);
+		System.out.println("sendTicketPayload: " + ticketName);
 		payload.setMessage(ticketName);
 		if (ticketPosition != null) {
 			payload.setPoint(ticketPosition);
@@ -147,7 +149,8 @@ public class ServerThread extends Thread {
 		if (ticketSize != null) {
 			payload.setPoint2(new Point(ticketSize.width, ticketSize.height));
 		}
-		payload.setFlag(isAvailable);
+		// payload.setFlag(isAvailable);
+		payload.setClientName(holder);
 		return sendPayload(payload);
 	}
 
@@ -224,6 +227,9 @@ public class ServerThread extends Thread {
 			break;
 		case JOIN_ROOM:
 			currentRoom.joinRoom(p.getMessage(), this);
+			break;
+		case PICKUP_TICKET:
+			currentRoom.doPickup(this);
 			break;
 		default:
 			log.log(Level.INFO, "Unhandled payload on server: " + p);

@@ -121,7 +121,6 @@ public class SocketServer {
 				roomNames.add(r.getName());
 				i++;
 			}
-
 			if (i > max) {
 				break;
 			}

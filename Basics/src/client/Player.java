@@ -15,8 +15,22 @@ public class Player extends GameObject implements Serializable {
 	private static final long serialVersionUID = -6088251166673414031L;
 	Color color = Color.RED;
 	Point nameOffset = new Point(0, 5);
-	int ticket = -1;
+	Ticket ticket = null;
+	Chair chair = null;
 	boolean isReady = false;
+	long lastAction = -1L;
+
+	public void setLastAction(Long l) {
+		lastAction = l;
+	}
+
+	public long getTimeBetweenLastAction(Long compare) {
+		return compare - lastAction;
+	}
+
+	public long getLastAction() {
+		return lastAction;
+	}
 
 	public void setReady(boolean r) {
 		isReady = r;
@@ -27,17 +41,32 @@ public class Player extends GameObject implements Serializable {
 	}
 
 	public boolean hasTicket() {
-		return ticket > -1;
+		return ticket != null;
 	}
 
-	public void setTicket(int n) {
+	public void setTicket(Ticket n) {
 		ticket = n;
 	}
 
-	public int takeTicket() {
-		int t = ticket;
-		ticket = -1;
+	public Ticket takeTicket() {
+		if (ticket == null) {
+			return null;
+		}
+		Ticket t = ticket;
+		ticket = null;
 		return t;
+	}
+
+	public void setChair(Chair c) {
+		chair = c;
+	}
+
+	public boolean isSitting() {
+		return chair != null;
+	}
+
+	public void unsit() {
+		chair = null;
 	}
 
 	/**

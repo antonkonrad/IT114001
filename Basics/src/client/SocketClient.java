@@ -48,6 +48,7 @@ public enum SocketClient {
 
 	private void sendPayload(Payload p) {
 		try {
+			System.out.println("Sending: " + p);
 			out.writeObject(p);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -68,6 +69,7 @@ public enum SocketClient {
 					Payload fromServer;
 					// while we're connected, listen for Payloads from server
 					while (!server.isClosed() && (fromServer = (Payload) in.readObject()) != null) {
+						System.out.println("Received from SERVER: " + fromServer);
 						processPayload(fromServer);
 					}
 				} catch (Exception e) {
@@ -166,12 +168,12 @@ public enum SocketClient {
 		}
 	}
 
-	private void sendChair(String name, Point position, Point dimension, boolean flag) {
+	private void sendChair(String name, Point position, Point dimension, String sitter) {
 		Iterator<Event> iter = events.iterator();
 		while (iter.hasNext()) {
 			Event e = iter.next();
 			if (e != null) {
-				e.onGetChair(name, position, dimension, flag);
+				e.onGetChair(name, position, dimension, sitter);
 
 			}
 		}
@@ -187,12 +189,12 @@ public enum SocketClient {
 		}
 	}
 
-	private void sendTicket(String name, Point position, Point dimension, boolean flag) {
+	private void sendTicket(String name, Point position, Point dimension, String holder) {// boolean flag) {
 		Iterator<Event> iter = events.iterator();
 		while (iter.hasNext()) {
 			Event e = iter.next();
 			if (e != null) {
-				e.onGetTicket(name, position, dimension, flag);
+				e.onGetTicket(name, position, dimension, holder);
 			}
 		}
 	}
@@ -243,7 +245,7 @@ public enum SocketClient {
 		case SYNC_CHAIR:
 			// we'll use null to reset and not null to add
 			if (p.getMessage() != null) {
-				sendChair(p.getMessage(), p.getPoint(), p.getPoint2(), p.getFlag());
+				sendChair(p.getMessage(), p.getPoint(), p.getPoint2(), p.getClientName());
 			} else {
 				sendResetChairs();
 			}
@@ -251,7 +253,8 @@ public enum SocketClient {
 		case SYNC_TICKET:
 			// we'll use null to reset and not null to add
 			if (p.getMessage() != null) {
-				sendTicket(p.getMessage(), p.getPoint(), p.getPoint2(), p.getFlag());
+				// changed from flag to passing client name
+				sendTicket(p.getMessage(), p.getPoint(), p.getPoint2(), p.getClientName());// p.getFlag());
 			} else {
 				sendResetTickets();
 			}
@@ -335,6 +338,12 @@ public enum SocketClient {
 		// so let's save a few bytes
 		p.setPayloadType(PayloadType.SYNC_DIRECTION);
 		p.setPoint(dir);
+		sendPayload(p);
+	}
+
+	public void syncPickupTicket() {
+		Payload p = new Payload();
+		p.setPayloadType(PayloadType.PICKUP_TICKET);
 		sendPayload(p);
 	}
 

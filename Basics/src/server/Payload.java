@@ -8,7 +8,7 @@ public class Payload implements Serializable {
 	/**
 	 * baeldung.com/java-serial-version-uid
 	 */
-	private static final long serialVersionUID = -6687715510484845706L;
+	private static final long serialVersionUID = -6687715510484845707L;
 
 	private String clientName;// ~2 bytes per character
 
@@ -87,7 +87,7 @@ public class Payload implements Serializable {
 
 	@Override
 	public String toString() {
-		return String.format("Type[%s], Number[%s], Message[%s]", getPayloadType().toString(), getNumber(),
-				getMessage());
+		return String.format("Type[%s], Number[%s], Message[%s], P1[%s], P2[%s]", getPayloadType().toString(),
+				getNumber(), getMessage(), getPoint(), getPoint2());
 	}
 }

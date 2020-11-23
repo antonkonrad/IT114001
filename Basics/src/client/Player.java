@@ -1,4 +1,3 @@
-
 package client;
 
 import java.awt.Color;
@@ -16,6 +15,30 @@ public class Player extends GameObject implements Serializable {
 	private static final long serialVersionUID = -6088251166673414031L;
 	Color color = Color.RED;
 	Point nameOffset = new Point(0, 5);
+	int ticket = -1;
+	boolean isReady = false;
+
+	public void setReady(boolean r) {
+		isReady = r;
+	}
+
+	public boolean isReady() {
+		return isReady;
+	}
+
+	public boolean hasTicket() {
+		return ticket > -1;
+	}
+
+	public void setTicket(int n) {
+		ticket = n;
+	}
+
+	public int takeTicket() {
+		int t = ticket;
+		ticket = -1;
+		return t;
+	}
 
 	/**
 	 * Gets called by the game engine to draw the current location/size

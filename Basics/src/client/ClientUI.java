@@ -5,6 +5,7 @@ import java.awt.CardLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FontMetrics;
+import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -22,6 +23,9 @@ import javax.swing.JButton;
 import javax.swing.JEditorPane;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
@@ -42,12 +46,28 @@ public class ClientUI extends JFrame implements Event {
 	private final static Logger log = Logger.getLogger(ClientUI.class.getName());
 	Dimension windowSize = Toolkit.getDefaultToolkit().getScreenSize();
 	GamePanel game;
+	String username;
+	RoomsPanel roomsPanel;
+	JMenuBar menu;
 
 	public ClientUI(String title) {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		windowSize.width *= .8;
-		windowSize.height *= .8;
+		menu = new JMenuBar();
+		JMenu roomsMenu = new JMenu("Actions");
+		JMenuItem roomsSearch = new JMenuItem("Rooms");
+		roomsSearch.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				goToPanel("rooms");
+			}
+
+		});
+		roomsMenu.add(roomsSearch);
+		menu.add(roomsMenu);
+		windowSize.width *= .85;
+		windowSize.height *= .85;
 		setPreferredSize(windowSize);
+		setSize(windowSize);// This is needed for setLocationRelativeTo()
 		setLocationRelativeTo(null);
 		self = this;
 		setTitle(title);
@@ -55,9 +75,12 @@ public class ClientUI extends JFrame implements Event {
 		setLayout(card);
 		createConnectionScreen();
 		createUserInputScreen();
+
 		createPanelRoom();
 		createPanelUserList();
-		createDrawingPanel();
+		this.setJMenuBar(menu);
+		// TODO remove
+		createRoomsPanel();
 		showUI();
 	}
 
@@ -93,7 +116,7 @@ public class ClientUI extends JFrame implements Event {
 
 		});
 		panel.add(button);
-		this.add(panel);
+		this.add(panel, "login");
 	}
 
 	void createUserInputScreen() {
@@ -104,20 +127,29 @@ public class ClientUI extends JFrame implements Event {
 		panel.add(userLabel);
 		panel.add(username);
 		JButton button = new JButton("Join");
+		ClientUI self = this;
 		button.addActionListener(new ActionListener() {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				String name = username.getText();
 				if (name != null && name.length() > 0) {
-					SocketClient.setUsername(name);
+					// need external ref since "this" context is the action event, not ClientUI
+					self.username = name;
+					// this order matters
+					createDrawingPanel();
+					pack();
+					self.setTitle(self.getTitle() + " - " + self.username);
+					game.setPlayerName(self.username);
+					SocketClient.INSTANCE.setUsername(self.username);
+
 					self.next();
 				}
 			}
 
 		});
 		panel.add(button);
-		this.add(panel);
+		this.add(panel, "details");
 	}
 
 	void createPanelRoom() {
@@ -130,6 +162,12 @@ public class ClientUI extends JFrame implements Event {
 		JScrollPane scroll = new JScrollPane(textArea);
 		scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 		scroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+		// updated to be 30% of screen width
+		Dimension d = new Dimension((int) (windowSize.width * .3), windowSize.height);
+		scroll.setPreferredSize(d);
+		scroll.setMinimumSize(d);
+		scroll.setMaximumSize(d);
+
 		panel.add(scroll, BorderLayout.CENTER);
 
 		JPanel input = new JPanel();
@@ -149,7 +187,7 @@ public class ClientUI extends JFrame implements Event {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				if (text.getText().length() > 0) {
-					SocketClient.sendMessage(text.getText());
+					SocketClient.INSTANCE.sendMessage(text.getText());
 					text.setText("");
 				}
 			}
@@ -157,7 +195,7 @@ public class ClientUI extends JFrame implements Event {
 		});
 		input.add(button);
 		panel.add(input, BorderLayout.SOUTH);
-		this.add(panel);
+		this.add(panel, "lobby");
 	}
 
 	void createPanelUserList() {
@@ -168,9 +206,11 @@ public class ClientUI extends JFrame implements Event {
 		JScrollPane scroll = new JScrollPane(userPanel);
 		scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 		scroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-
-		Dimension d = new Dimension(100, windowSize.height);
+		// updated to be 10% of screen width
+		Dimension d = new Dimension((int) (windowSize.width * .1), windowSize.height);
 		scroll.setPreferredSize(d);
+		scroll.setMinimumSize(d);
+		scroll.setMaximumSize(d);
 
 		textArea.getParent().getParent().getParent().add(scroll, BorderLayout.EAST);
 	}
@@ -179,8 +219,14 @@ public class ClientUI extends JFrame implements Event {
 		game = new GamePanel();
 		game.setPreferredSize(new Dimension((int) (windowSize.width * .6), windowSize.height));
 		textArea.getParent().getParent().getParent().add(game, BorderLayout.WEST);
-		// TODO remove from here
-		game.attachListeners();
+
+		// TODO unsubscribe when done
+		SocketClient.INSTANCE.registerCallbackListener(game);
+	}
+
+	void createRoomsPanel() {
+		roomsPanel = new RoomsPanel(this);
+		this.add(roomsPanel, "rooms");
 	}
 
 	void addClient(String name) {
@@ -228,7 +274,8 @@ public class ClientUI extends JFrame implements Event {
 		entry.setEditable(false);
 		// entry.setLayout(null);
 		entry.setText(str);
-		Dimension d = new Dimension(textArea.getSize().width, calcHeightForText(str));
+		int areaWidth = textArea.getSize().width;
+		Dimension d = new Dimension(areaWidth, calcHeightForText(str));
 		// attempt to lock all dimensions
 		entry.setMinimumSize(d);
 		entry.setPreferredSize(d);
@@ -236,9 +283,32 @@ public class ClientUI extends JFrame implements Event {
 		textArea.add(entry);
 
 		pack();
-		System.out.println(entry.getSize());
+		resizeTexts();
+		// System.out.println(entry.getSize());
 		JScrollBar sb = ((JScrollPane) textArea.getParent().getParent()).getVerticalScrollBar();
 		sb.setValue(sb.getMaximum());
+	}
+
+	void resizeTexts() {
+		// attempts to fix sizing of messages when text area gets resized
+		// sort of works so good enough for my example
+		int areaWidth = textArea.getSize().width;
+		int cc = textArea.getComponents().length;
+		if (cc > 1) {
+			// if we have more than 1 text item
+			Component test = textArea.getComponent(cc - 2);
+			// check if the test width is different than our container
+			if (areaWidth != test.getWidth()) {
+				// if so let's try to resize all the components to be the same width
+				for (Component c : textArea.getComponents()) {
+					Dimension current = c.getSize();
+					Dimension updated = new Dimension(areaWidth, current.height);
+					c.setPreferredSize(updated);
+					c.setMinimumSize(updated);
+					c.setMaximumSize(updated);
+				}
+			}
+		}
 	}
 
 	void next() {
@@ -249,9 +319,23 @@ public class ClientUI extends JFrame implements Event {
 		card.previous(this.getContentPane());
 	}
 
+	void goToPanel(String panel) {
+		switch (panel) {
+		case "rooms":
+			// TODO get rooms
+			roomsPanel.removeAllRooms();
+			SocketClient.INSTANCE.sendGetRooms(null);
+			break;
+		default:
+			// no need to react
+			break;
+		}
+		card.show(this.getContentPane(), panel);
+	}
+
 	void connect(String host, String port) throws IOException {
-		SocketClient.callbackListener(this);
-		SocketClient.connectAndStart(host, port);
+		SocketClient.INSTANCE.registerCallbackListener(this);
+		SocketClient.INSTANCE.connectAndStart(host, port);
 	}
 
 	void showUI() {
@@ -302,6 +386,7 @@ public class ClientUI extends JFrame implements Event {
 			removeClient(u);
 			iter.remove();
 		}
+		goToPanel("lobby");
 	}
 
 	public static void main(String[] args) {
@@ -309,5 +394,57 @@ public class ClientUI extends JFrame implements Event {
 		if (ui != null) {
 			log.log(Level.FINE, "Started");
 		}
+	}
+
+	@Override
+	public void onSyncDirection(String clientName, Point direction) {
+		// TODO Auto-generated method stub
+		// no need to sync this for ClientUI
+	}
+
+	@Override
+	public void onSyncPosition(String clientName, Point position) {
+		// TODO Auto-generated method stub
+		// no need to sync this for ClientUI
+	}
+
+	@Override
+	public void onGetRoom(String roomName) {
+		// TODO Auto-generated method stub
+		if (roomsPanel != null) {
+			roomsPanel.addRoom(roomName);
+			pack();
+		}
+	}
+
+	@Override
+	public void onResize(Point p) {
+		// TODO Auto-generated method stub
+		// ignore it here, I'm sending it to resize the game area
+		resizeTexts();
+	}
+
+	@Override
+	public void onGetChair(String chairName, Point position, Point dimension, boolean flag) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void onResetChairs() {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void onGetTicket(String ticketName, Point position, Point dimension, boolean flag) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void onResetTickets() {
+		// TODO Auto-generated method stub
+
 	}
 }

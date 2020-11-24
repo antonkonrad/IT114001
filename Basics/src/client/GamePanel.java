@@ -23,7 +23,6 @@ import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
 import javax.swing.InputMap;
 import javax.swing.KeyStroke;
-import javax.swing.plaf.basic.BasicInternalFrameTitlePane.MoveAction;
 
 import core.BaseGamePanel;
 

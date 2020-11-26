@@ -15,10 +15,11 @@ public class Player extends GameObject implements Serializable {
 	private static final long serialVersionUID = -6088251166673414031L;
 	Color color = Color.RED;
 	Point nameOffset = new Point(0, 5);
-	Ticket ticket = null;
-	Chair chair = null;
-	boolean isReady = false;
+	Attack attack = null;
+	Ship ship = null;
+	static boolean isReady = false;
 	long lastAction = -1L;
+	int time = 90;
 
 	public void setLastAction(Long l) {
 		lastAction = l;
@@ -32,7 +33,7 @@ public class Player extends GameObject implements Serializable {
 		return lastAction;
 	}
 
-	public void setReady(boolean r) {
+	public static void setReady(boolean r) {
 		isReady = r;
 	}
 
@@ -40,33 +41,48 @@ public class Player extends GameObject implements Serializable {
 		return isReady;
 	}
 
-	public boolean hasTicket() {
-		return ticket != null;
+	public boolean hasAttack() {
+		return attack != null;
 	}
 
-	public void setTicket(Ticket n) {
-		ticket = n;
+	public void setAttack(Attack n) {
+		attack = n;
 	}
 
-	public Ticket takeTicket() {
-		if (ticket == null) {
+	public Attack takeAttack() {
+		if (attack == null) {
 			return null;
 		}
-		Ticket t = ticket;
-		ticket = null;
-		return t;
+		Attack a = attack;
+		attack = null;
+		return a;
 	}
 
-	public void setChair(Chair c) {
-		chair = c;
+	public void setShip(Ship s) {
+		ship = s;
 	}
 
-	public boolean isSitting() {
-		return chair != null;
+	public boolean isShip() { //// isSitting() maybe return something to alert if ship is there or not (hit/
+								//// miss)
+		return ship != null;
 	}
 
-	public void unsit() {
-		chair = null;
+	public void unSit() { /// what to do here?
+		ship = null;
+	}
+
+////added
+	public void roundTimer(int time) {
+		int timer = time;
+		for (int i = 0; i >= timer; i++) {
+			Player.setReady(true);
+		}
+
+	}
+
+///added
+	public int getRoundTimer(int time) {
+		return time;
 	}
 
 	/**
@@ -88,7 +104,7 @@ public class Player extends GameObject implements Serializable {
 
 	@Override
 	public String toString() {
-		return String.format("Name: %s, p: (%d,%d), s: (%d, %d), d: (%d, %d), isAcitve: %s", name, position.x,
-				position.y, speed.x, speed.y, direction.x, direction.y, isActive);
+		return String.format("Name: %s, p: (%d,%d), s: (%d, %d), d: (%d, %d), isAcitve: %s, Round Timer: %s ", name,
+				position.x, position.y, speed.x, speed.y, direction.x, direction.y, isActive, time);
 	}
 }

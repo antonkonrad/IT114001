@@ -62,6 +62,16 @@ public class Payload implements Serializable {
 		return new Point(x, y);
 	}
 
+///////////added
+	public int getX() {
+		return x;
+	}
+
+///////////added
+	public int getY() {
+		return y;
+	}
+
 	// added so two sets of x,y could be sent
 	int x2 = 0;// 4 bytes
 	int y2 = 0;// 4 bytes
@@ -85,9 +95,10 @@ public class Payload implements Serializable {
 		return new Point(x2, y2);
 	}
 
+///////////added /edited
 	@Override
 	public String toString() {
-		return String.format("Type[%s], Number[%s], Message[%s], P1[%s], P2[%s]", getPayloadType().toString(),
-				getNumber(), getMessage(), getPoint(), getPoint2());
+		return String.format("Type %s, X:%s, Y:%s, Player Id: %s ", getPayloadType().toString(), getX(), getY(),
+				getClientName());
 	}
 }

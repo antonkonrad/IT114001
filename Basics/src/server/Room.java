@@ -9,8 +9,11 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+////added
+import client.Attack;
 import client.Chair;
 import client.Player;
+import client.Ship;
 import client.Ticket;
 import core.BaseGamePanel;
 import core.Helpers;
@@ -31,8 +34,8 @@ public class Room extends BaseGamePanel implements AutoCloseable {
 	private final static String READY = "ready";
 	private List<ClientPlayer> clients = new ArrayList<ClientPlayer>();
 	static Dimension gameAreaSize = new Dimension(800, 800);
-	private List<Chair> chairs = new ArrayList<Chair>();
-	private List<Ticket> tickets = new ArrayList<Ticket>();
+	private List<Ship> Ships = new ArrayList<Ship>(); ///// Ships are == Chairs (what you (Place))
+	private List<Attack> Attacks = new ArrayList<Attack>(); /////// Attacks == Tickets (what you (Pick))
 
 	public Room(String name, boolean delayStart) {
 		super(delayStart);
@@ -61,30 +64,30 @@ public class Room extends BaseGamePanel implements AutoCloseable {
 		return startPos;
 	}
 
-	private void generateSeats() {
+	private void generateShips() {
 		int players = clients.size();
-		final int chairs = Helpers.getNumberBetween(players, (int) (players * 1.5));
-		final Dimension chairSize = new Dimension(25, 25);
+		final int ships = Helpers.getNumberBetween(players, (int) (players * 3));
+		final Dimension shipSize = new Dimension(1, 3);
 		final float paddingLeft = .1f;
 		final float paddingRight = .9f;
 		final float paddingTop = .1f;
-		final float chairSpacing = chairSize.height * 1.75f;
-		final int chairHalfWidth = (int) (chairSize.width * .5);
+		final float shipSpacing = shipSize.height * 1.75f;
+		final int shipHalfWidth = (int) (shipSize.width * .5);
 		final int screenWidth = gameAreaSize.width;
 		final int screenHeight = gameAreaSize.height;
-		for (int i = 0; i < chairs; i++) {
-			Chair chair = new Chair("Chair " + (i + 1));
-			Point chairPosition = new Point();
+		for (int i = 0; i < ships; i++) {
+			Ship ship = new Ship("Ship " + (i));
+			Point shipPosition = new Point();
 			if (i % 2 == 0) {
-				chairPosition.x = (int) ((screenWidth * paddingRight) - chairHalfWidth);
+				shipPosition.x = (int) ((screenWidth * paddingRight) - shipHalfWidth);
 			} else {
-				chairPosition.x = (int) (screenWidth * paddingLeft);
+				shipPosition.x = (int) (screenWidth * paddingLeft);
 			}
-			chairPosition.y = (int) ((screenHeight * paddingTop) + (chairSpacing * (i / 2)));
-			chair.setPosition(chairPosition);
-			chair.setSize(chairSize.width, chairSize.height);
-			chair.setPlayer(null);
-			this.chairs.add(chair);
+			shipPosition.y = (int) ((screenHeight * paddingTop) + (shipSpacing * (i / 2)));
+			ship.setPosition(shipPosition);
+			ship.setSize(shipSize.width, shipSize.height);
+			ship.setPlayer(null);
+			this.Ships.add(ship);
 		}
 
 	}
@@ -118,7 +121,7 @@ public class Room extends BaseGamePanel implements AutoCloseable {
 		}
 	}
 
-	private void generateTickets() {
+	private void generateAttacks() {
 		int players = clients.size() + 1;
 		final int tickets = Helpers.getNumberBetween(players, (int) (players * 1.5));
 		final int screenWidth = gameAreaSize.width;
@@ -202,6 +205,7 @@ public class Room extends BaseGamePanel implements AutoCloseable {
 		}
 	}
 
+///////////added
 	private void syncGameSize() {
 		Iterator<ClientPlayer> iter = clients.iterator();
 		while (iter.hasNext()) {

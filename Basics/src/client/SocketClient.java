@@ -209,6 +209,65 @@ public enum SocketClient {
 		}
 	}
 
+///////////added
+	private void sendPlace(String name, Point position, Point dimension, String shipName) {
+		Iterator<Event> iter = events.iterator();
+		while (iter.hasNext()) {
+			Event e = iter.next();
+			if (e != null) {
+				e.onGetPlace(name, position, dimension, shipName);
+
+			}
+		}
+	}
+
+///////////added
+	private void sendResetPlace() {
+		Iterator<Event> iter = events.iterator();
+		while (iter.hasNext()) {
+			Event e = iter.next();
+			if (e != null) {
+				e.onResetPlace();
+			}
+		}
+
+	}
+
+///////////added
+	private void sendPick(String name, Point position, Point dimension, String ship) {
+		Iterator<Event> iter = events.iterator();
+		while (iter.hasNext()) {
+			Event e = iter.next();
+			if (e != null) {
+				e.onGetPick(name, position, dimension, ship);
+
+			}
+		}
+	}
+
+///////////added
+	private void sendResetPick() {
+		Iterator<Event> iter = events.iterator();
+		while (iter.hasNext()) {
+			Event e = iter.next();
+			if (e != null) {
+				e.onResetPick();
+			}
+		}
+	}
+
+///////////added
+	private void sendHit() {
+	}
+
+///////////added
+	private void sendMiss() {
+	}
+
+///////////added
+	private void sendTurn() {
+	}
+
 	/***
 	 * Determine any special logic for different PayloadTypes
 	 * 
@@ -258,6 +317,45 @@ public enum SocketClient {
 			} else {
 				sendResetTickets();
 			}
+			break;
+
+		/////////// added
+		case SYNC_PLACE:
+			// we'll use null to reset and not null to add
+			if (p.getMessage() != null) {
+				// changed from flag to passing client name
+				sendPlace(p.getMessage(), p.getPoint(), p.getPoint2(), p.getClientName());// p.getFlag());
+			} else {
+				sendResetPlace();
+			}
+			break;
+		case SYNC_PICK:
+			// we'll use null to reset and not null to add
+			if (p.getMessage() != null) {
+				// changed from flag to passing client name
+				sendPlace(p.getMessage(), p.getPoint(), p.getPoint2(), p.getClientName());// p.getFlag());
+			} else {
+				sendResetTickets();
+			}
+			break;
+		case SYNC_HIT:
+			// we'll use null to reset and not null to add
+			if (p.getMessage() != null) {
+				sendChair(p.getMessage(), p.getPoint(), p.getPoint2(), p.getClientName());
+			} else {
+				sendResetChairs();
+			}
+			break;
+		case SYNC_MISS:
+			// we'll use null to reset and not null to add
+			if (p.getMessage() != null) {
+				sendChair(p.getMessage(), p.getPoint(), p.getPoint2(), p.getClientName());
+			} else {
+				sendResetChairs();
+			}
+			break;
+		case SYNC_TURN:
+
 			break;
 		default:
 			log.log(Level.WARNING, "unhandled payload on client" + p);
@@ -341,9 +439,16 @@ public enum SocketClient {
 		sendPayload(p);
 	}
 
-	public void syncPickupTicket() {
+	public void syncPickupAttack() {
 		Payload p = new Payload();
 		p.setPayloadType(PayloadType.PICKUP_TICKET);
+		sendPayload(p);
+	}
+
+/////////////// addded
+	public void syncPickupShip() {
+		Payload p = new Payload();
+		p.setPayloadType(PayloadType.SYNC_PICK);
 		sendPayload(p);
 	}
 

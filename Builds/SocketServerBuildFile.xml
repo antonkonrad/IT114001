@@ -7,14 +7,14 @@
     <property name="dir.workspace" value="${dir.buildfile}/.."/>
     <property name="dir.jarfile" value="${dir.buildfile}"/>
     <target name="create_run_jar">
-        <jar destfile="${dir.jarfile}/SocketServer1jar.jar">
+        <jar destfile="${dir.jarfile}/SocketServer.jar">
             <manifest>
                 <attribute name="Main-Class" value="server.SocketServer"/>
                 <attribute name="Class-Path" value="."/>
             </manifest>
             <fileset dir="${dir.workspace}/Basics/bin"/>
         </jar>
-        <delete dir="${dir.jarfile}/SocketServer1jar_lib"/>
-        <mkdir dir="${dir.jarfile}/SocketServer1jar_lib"/>
+        <delete dir="${dir.jarfile}/SocketServer_lib"/>
+        <mkdir dir="${dir.jarfile}/SocketServer_lib"/>
     </target>
 </project>

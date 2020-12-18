@@ -168,47 +168,57 @@ public enum SocketClient {
 		}
 	}
 
-	private void sendChair(String name, Point position, Point dimension, String sitter) {
-		Iterator<Event> iter = events.iterator();
-		while (iter.hasNext()) {
-			Event e = iter.next();
-			if (e != null) {
-				e.onGetChair(name, position, dimension, sitter);
-
-			}
-		}
-	}
-
-	private void sendResetChairs() {
-		Iterator<Event> iter = events.iterator();
-		while (iter.hasNext()) {
-			Event e = iter.next();
-			if (e != null) {
-				e.onResetChairs();
-			}
-		}
-	}
-
-	private void sendTicket(String name, Point position, Point dimension, String holder) {// boolean flag) {
-		Iterator<Event> iter = events.iterator();
-		while (iter.hasNext()) {
-			Event e = iter.next();
-			if (e != null) {
-				e.onGetTicket(name, position, dimension, holder);
-			}
-		}
-	}
-
-	private void sendResetTickets() {
-		Iterator<Event> iter = events.iterator();
-		while (iter.hasNext()) {
-			Event e = iter.next();
-			if (e != null) {
-				e.onResetTickets();
-			}
-		}
-	}
-
+	/*
+	 * private void sendChair(String name, Point position, Point dimension, String
+	 * sitter) { Iterator<Event> iter = events.iterator(); while (iter.hasNext()) {
+	 * Event e = iter.next(); if (e != null) { e.onGetChair(name, position,
+	 * dimension, sitter);
+	 * 
+	 * } } }
+	 * 
+	 * private void sendResetChairs() { Iterator<Event> iter = events.iterator();
+	 * while (iter.hasNext()) { Event e = iter.next(); if (e != null) {
+	 * e.onResetChairs(); } } }
+	 * 
+	 * private void sendTicket(String name, Point position, Point dimension, String
+	 * holder) {// boolean flag) { Iterator<Event> iter = events.iterator(); while
+	 * (iter.hasNext()) { Event e = iter.next(); if (e != null) {
+	 * e.onGetTicket(name, position, dimension, holder); } } }
+	 * 
+	 * private void sendResetTickets() { Iterator<Event> iter = events.iterator();
+	 * while (iter.hasNext()) { Event e = iter.next(); if (e != null) {
+	 * e.onResetTickets(); } } }
+	 * 
+	 * ///////////added private void sendPlace(String name, Point position, Point
+	 * dimension, String shipName) { Iterator<Event> iter = events.iterator(); while
+	 * (iter.hasNext()) { Event e = iter.next(); if (e != null) { e.onGetPlace(name,
+	 * position, dimension, shipName);
+	 * 
+	 * } } }
+	 * 
+	 * ///////////added private void sendResetPlace() { Iterator<Event> iter =
+	 * events.iterator(); while (iter.hasNext()) { Event e = iter.next(); if (e !=
+	 * null) { e.onResetPlace(); } }
+	 * 
+	 * }
+	 * 
+	 * ///////////added private void sendPick(String name, Point position, Point
+	 * dimension, String ship) { Iterator<Event> iter = events.iterator(); while
+	 * (iter.hasNext()) { Event e = iter.next(); if (e != null) { e.onGetPick(name,
+	 * position, dimension, ship);
+	 * 
+	 * } } }
+	 * 
+	 * ///////////added private void sendResetPick() { Iterator<Event> iter =
+	 * events.iterator(); while (iter.hasNext()) { Event e = iter.next(); if (e !=
+	 * null) { e.onResetPick(); } } }
+	 * 
+	 * ///////////added private void sendHit() { }
+	 * 
+	 * ///////////added private void sendMiss() { }
+	 * 
+	 * ///////////added private void sendTurn() { }
+	 */
 	/***
 	 * Determine any special logic for different PayloadTypes
 	 * 
@@ -242,30 +252,56 @@ public enum SocketClient {
 		case SYNC_GAME_SIZE:
 			sendSize(p.getPoint());
 			break;
-		case SYNC_CHAIR:
-			// we'll use null to reset and not null to add
-			if (p.getMessage() != null) {
-				sendChair(p.getMessage(), p.getPoint(), p.getPoint2(), p.getClientName());
-			} else {
-				sendResetChairs();
-			}
+		case RECEIVE_CLICK:
+			int hitOrMiss = p.getNumber(); // 1 or 0 (-1 to reset)
+			// onReceivedClick(p.getPoint(), hitOrMiss);
 			break;
-		case SYNC_TICKET:
-			// we'll use null to reset and not null to add
-			if (p.getMessage() != null) {
-				// changed from flag to passing client name
-				sendTicket(p.getMessage(), p.getPoint(), p.getPoint2(), p.getClientName());// p.getFlag());
-			} else {
-				sendResetTickets();
-			}
+		case SET_COUNTDOWN:
+			sendCountdown(p.getMessage(), p.getNumber());
 			break;
+		/*
+		 * case SYNC_CHAIR: // we'll use null to reset and not null to add if
+		 * (p.getMessage() != null) { sendChair(p.getMessage(), p.getPoint(),
+		 * p.getPoint2(), p.getClientName()); } else { sendResetChairs(); } break; case
+		 * SYNC_TICKET: // we'll use null to reset and not null to add if
+		 * (p.getMessage() != null) { // changed from flag to passing client name
+		 * sendTicket(p.getMessage(), p.getPoint(), p.getPoint2(), p.getClientName());//
+		 * p.getFlag()); } else { sendResetTickets(); } break;
+		 * 
+		 * /////////// added case SYNC_PLACE: // we'll use null to reset and not null to
+		 * add if (p.getMessage() != null) { // changed from flag to passing client name
+		 * sendPlace(p.getMessage(), p.getPoint(), p.getPoint2(), p.getClientName());//
+		 * p.getFlag()); } else { sendResetPlace(); } break; case SYNC_PICK: // we'll
+		 * use null to reset and not null to add if (p.getMessage() != null) { //
+		 * changed from flag to passing client name sendPlace(p.getMessage(),
+		 * p.getPoint(), p.getPoint2(), p.getClientName());// p.getFlag()); } else {
+		 * sendResetTickets(); } break; case SYNC_HIT: // we'll use null to reset and
+		 * not null to add if (p.getMessage() != null) { sendChair(p.getMessage(),
+		 * p.getPoint(), p.getPoint2(), p.getClientName()); } else { sendResetChairs();
+		 * } break; case SYNC_MISS: // we'll use null to reset and not null to add if
+		 * (p.getMessage() != null) { sendChair(p.getMessage(), p.getPoint(),
+		 * p.getPoint2(), p.getClientName()); } else { sendResetChairs(); } break; case
+		 * SYNC_TURN:
+		 * 
+		 * break;
+		 */
 		default:
 			log.log(Level.WARNING, "unhandled payload on client" + p);
 			break;
 
 		}
+
 	}
 
+	private void sendCountdown(String message, int duration) {
+		Iterator<Event> iter = events.iterator();
+		while (iter.hasNext()) {
+			Event e = iter.next();
+			if (e != null) {
+				e.onSetCountdown(message, duration);
+			}
+		}
+	}
 	// TODO Start public methods here
 
 	public void registerCallbackListener(Event e) {
@@ -341,9 +377,16 @@ public enum SocketClient {
 		sendPayload(p);
 	}
 
-	public void syncPickupTicket() {
+	public void syncPickupAttack() {
 		Payload p = new Payload();
 		p.setPayloadType(PayloadType.PICKUP_TICKET);
+		sendPayload(p);
+	}
+
+/////////////// addded
+	public void syncPickupShip() {
+		Payload p = new Payload();
+		p.setPayloadType(PayloadType.SYNC_PICK);
 		sendPayload(p);
 	}
 

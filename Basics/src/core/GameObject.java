@@ -156,10 +156,12 @@ public abstract class GameObject implements Serializable {
 	 * @param g
 	 * @return
 	 */
+
 	public boolean draw(Graphics g) {
 		if (!isActive) {
 			return false;
 		}
 		return true;
 	}
+
 }

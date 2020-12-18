@@ -49,6 +49,7 @@ public class ClientUI extends JFrame implements Event {
 	String username;
 	RoomsPanel roomsPanel;
 	JMenuBar menu;
+	public static ClientUI Instance;
 
 	public ClientUI(String title) {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -92,7 +93,7 @@ public class ClientUI extends JFrame implements Event {
 		panel.add(hostLabel);
 		panel.add(host);
 		JLabel portLabel = new JLabel("Port:");
-		JTextField port = new JTextField("3000");
+		JTextField port = new JTextField("3002");
 		panel.add(portLabel);
 		panel.add(port);
 		JButton button = new JButton("Next");
@@ -243,8 +244,8 @@ public class ClientUI extends JFrame implements Event {
 		this.add(roomsPanel, "rooms");
 	}
 
-	void addClient(String name) {
-		User u = new User(name);
+	void addClient(String name, int score) {
+		User u = new User(name, score, "<font color=purple>%s</font>");
 		Dimension p = new Dimension(userPanel.getSize().width, 30);
 		u.setPreferredSize(p);
 		u.setMinimumSize(p);
@@ -259,6 +260,25 @@ public class ClientUI extends JFrame implements Event {
 		client.removeAll();
 		userPanel.revalidate();
 		userPanel.repaint();
+	}
+
+	public void resortUserList(List<Player> players) {
+		Iterator<User> iter = users.iterator();
+		while (iter.hasNext()) {
+			User u = iter.next();
+			if (u != null) {
+				removeClient(u);
+				iter.remove();
+			}
+		}
+		players.sort((o1, o2) -> o1.getKicks() - o2.getKicks());
+		Iterator<Player> iter2 = players.iterator();
+		while (iter2.hasNext()) {
+			Player p = iter2.next();
+			if (p != null) {
+				addClient(p.getName(), p.getKicks());
+			}
+		}
 	}
 
 	/***
@@ -367,7 +387,7 @@ public class ClientUI extends JFrame implements Event {
 	@Override
 	public void onClientConnect(String clientName, String message) {
 		log.log(Level.INFO, String.format("%s: %s", clientName, message));
-		addClient(clientName);
+		// addClient(clientName);
 		if (message != null && !message.isBlank()) {
 			self.addMessage(String.format("%s: %s", clientName, message));
 		}
@@ -442,26 +462,34 @@ public class ClientUI extends JFrame implements Event {
 	}
 
 	@Override
-	public void onGetChair(String chairName, Point position, Point dimension, String flag) {
+	public void onSetCountdown(String message, int duration) {
 		// TODO Auto-generated method stub
 
 	}
 
 	@Override
-	public void onResetChairs() {
+	public void onToggleLock(boolean isLocked) {
 		// TODO Auto-generated method stub
 
 	}
+	/*
+	 * @Override public void onGetShip(String chairName, Point position, Point
+	 * dimension, String flag) { // TODO Auto-generated method stub
+	 * 
+	 * }
+	 * 
+	 * @Override public void onResetShips() { // TODO Auto-generated method stub
+	 * 
+	 * }
+	 * 
+	 * @Override public void onGetTicket(String ticketName, Point position, Point
+	 * dimension, String holder) { // TODO Auto-generated method stub
+	 * 
+	 * }
+	 * 
+	 * @Override public void onResetTickets() { // TODO Auto-generated method stub
+	 * 
+	 * }
+	 */
 
-	@Override
-	public void onGetTicket(String ticketName, Point position, Point dimension, String holder) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void onResetTickets() {
-		// TODO Auto-generated method stub
-
-	}
 }

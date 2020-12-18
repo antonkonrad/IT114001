@@ -19,11 +19,29 @@ public interface Event {
 
 	void onResize(Point p);
 
-	void onGetChair(String chairName, Point position, Point dimension, String sitter);
+	void onSetCountdown(String message, int duration);
 
-	void onResetChairs();
+	void onToggleLock(boolean isLocked);
+	/*
+	 * void onGetShip(String chairName, Point position, Point dimension, String
+	 * sitter);
+	 * 
+	 * void onResetShips();
+	 * 
+	 * void onGetAttack(String ticketName, Point position, Point dimension, String
+	 * holder);// boolean isAvailable);
+	 * 
+	 * void onResetAttacks();
+	 * 
+	 * ///////////added void onGetPlace(String chairName, Point position, Point
+	 * dimension, String sitter);
+	 * 
+	 * void onResetPlace();
+	 * 
+	 * void onGetPick(String ticketName, Point position, Point dimension, String
+	 * holder);// boolean isAvailable);
+	 * 
+	 * void onResetPick();
+	 */
 
-	void onGetTicket(String ticketName, Point position, Point dimension, String holder);// boolean isAvailable);
-
-	void onResetTickets();
 }

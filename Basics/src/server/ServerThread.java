@@ -123,37 +123,26 @@ public class ServerThread extends Thread {
 		return sendPayload(payload);
 	}
 
-	protected boolean sendChair(String chairName, Point chairPosition, Dimension chairSize, String sitter) {
-		Payload payload = new Payload();
-		payload.setPayloadType(PayloadType.SYNC_CHAIR);
-		payload.setMessage(chairName);
-		if (chairPosition != null) {
-			payload.setPoint(chairPosition);
-		}
-		if (chairSize != null) {
-			payload.setPoint2(new Point(chairSize.width, chairSize.height));
-		}
-		payload.setClientName(sitter);
-		return sendPayload(payload);
-	}
-
-	// updated boolean isAvailable to String of holder (or null)
-	protected boolean sendTicket(String ticketName, Point ticketPosition, Dimension ticketSize, String holder) {
-		Payload payload = new Payload();
-		payload.setPayloadType(PayloadType.SYNC_TICKET);
-		System.out.println("sendTicketPayload: " + ticketName);
-		payload.setMessage(ticketName);
-		if (ticketPosition != null) {
-			payload.setPoint(ticketPosition);
-		}
-		if (ticketSize != null) {
-			payload.setPoint2(new Point(ticketSize.width, ticketSize.height));
-		}
-		// payload.setFlag(isAvailable);
-		payload.setClientName(holder);
-		return sendPayload(payload);
-	}
-
+	/*
+	 * protected boolean sendChair(String chairName, Point chairPosition, Dimension
+	 * chairSize, String sitter) { Payload payload = new Payload();
+	 * payload.setPayloadType(PayloadType.SYNC_CHAIR);
+	 * payload.setMessage(chairName); if (chairPosition != null) {
+	 * payload.setPoint(chairPosition); } if (chairSize != null) {
+	 * payload.setPoint2(new Point(chairSize.width, chairSize.height)); }
+	 * payload.setClientName(sitter); return sendPayload(payload); }
+	 * 
+	 * // updated boolean isAvailable to String of holder (or null) protected
+	 * boolean sendTicket(String ticketName, Point ticketPosition, Dimension
+	 * ticketSize, String holder) { Payload payload = new Payload();
+	 * payload.setPayloadType(PayloadType.SYNC_TICKET);
+	 * System.out.println("sendTicketPayload: " + ticketName);
+	 * payload.setMessage(ticketName); if (ticketPosition != null) {
+	 * payload.setPoint(ticketPosition); } if (ticketSize != null) {
+	 * payload.setPoint2(new Point(ticketSize.width, ticketSize.height)); } //
+	 * payload.setFlag(isAvailable); payload.setClientName(holder); return
+	 * sendPayload(payload); }
+	 */
 	protected boolean sendGameAreaSize(Dimension roomSize) {
 		Payload payload = new Payload();
 		payload.setPayloadType(PayloadType.SYNC_GAME_SIZE);
@@ -228,13 +217,25 @@ public class ServerThread extends Thread {
 		case JOIN_ROOM:
 			currentRoom.joinRoom(p.getMessage(), this);
 			break;
-		case PICKUP_TICKET:
-			currentRoom.doPickup(this);
+		// case PICKUP_TICKET:
+		// currentRoom.doPickup(this);
+		// break;
+		case SYNC_PICK:
+			Point chosenCell = p.getPoint();
+			currentRoom.checkGrid(chosenCell.x, chosenCell.y);
 			break;
 		default:
 			log.log(Level.INFO, "Unhandled payload on server: " + p);
 			break;
 		}
+	}
+
+	protected boolean sendCountdown(String message, int duration) {
+		Payload payload = new Payload();
+		payload.setPayloadType(PayloadType.SET_COUNTDOWN);
+		payload.setMessage(message);
+		payload.setNumber(duration);
+		return sendPayload(payload);
 	}
 
 	@Override

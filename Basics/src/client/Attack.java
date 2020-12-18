@@ -1,8 +1,6 @@
 package client;
 
 import java.awt.Color;
-import java.awt.Font;
-import java.awt.Graphics;
 import java.awt.Point;
 import java.io.Serializable;
 
@@ -51,26 +49,16 @@ public class Attack extends GameObject implements Serializable {
 	/**
 	 * Gets called by the game engine to draw the current location/size
 	 */
-	@Override
-	public boolean draw(Graphics g) {
-		// using a boolean here so we can block drawing if isActive is false via call to
-		// super
-		if (super.draw(g)) {
-			g.setColor(color);
-			if (holder != null) {
-				// TODO this fixes it!
-				// position = holder.getPosition();
-				position.x = holder.getPosition().x;
-				position.y = holder.getPosition().y;
-			}
-			g.fillRect(position.x, position.y, size.width, size.height);
-			g.setColor(Color.WHITE);
-			g.setFont(new Font("Monospaced", Font.PLAIN, 12));
-			g.drawString(getName(), position.x + nameOffset.x, position.y + nameOffset.y);
-		}
-		return true;
-	}
-
+	/*
+	 * @Override public boolean draw(Graphics g) { // using a boolean here so we can
+	 * block drawing if isActive is false via call to // super if (super.draw(g)) {
+	 * g.setColor(color); if (holder != null) { // TODO this fixes it! // position =
+	 * holder.getPosition(); position.x = holder.getPosition().x; position.y =
+	 * holder.getPosition().y; } g.fillRect(position.x, position.y, size.width,
+	 * size.height); g.setColor(Color.WHITE); g.setFont(new Font("Monospaced",
+	 * Font.PLAIN, 12)); g.drawString(getName(), position.x + nameOffset.x,
+	 * position.y + nameOffset.y); } return true; }
+	 */
 	@Override
 	public String toString() {
 		return String.format("Name: %s, p: (%d,%d), s: (%d, %d), d: (%d, %d), isAcitve: %s", name, position.x,

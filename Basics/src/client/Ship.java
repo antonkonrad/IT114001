@@ -1,8 +1,6 @@
 package client;
 
 import java.awt.Color;
-import java.awt.Font;
-import java.awt.Graphics;
 import java.awt.Point;
 import java.io.Serializable;
 
@@ -45,20 +43,15 @@ public class Ship extends GameObject implements Serializable {
 	/**
 	 * Gets called by the game engine to draw the current location/size
 	 */
-	@Override
-	public boolean draw(Graphics g) {
-		// using a boolean here so we can block drawing if isActive is false via call to
-		// super
-		if (super.draw(g)) {
-			g.setColor(color);
-			g.drawRect(position.x, position.y, size.width, size.height);
-			g.setColor(Color.WHITE);
-			g.setFont(new Font("Monospaced", Font.PLAIN, 12));
-			g.drawString((isAvailable() ? "Available" : "Taken: " + getSitterName()), position.x + nameOffset.x,
-					position.y + nameOffset.y);
-		}
-		return true;
-	}
+	/*
+	 * @Override public boolean draw(Graphics g) { // using a boolean here so we can
+	 * block drawing if isActive is false via call to // super if (super.draw(g)) {
+	 * g.setColor(color); g.drawRect(position.x, position.y, size.width,
+	 * size.height); g.setColor(Color.WHITE); g.setFont(new Font("Monospaced",
+	 * Font.PLAIN, 12)); g.drawString((isAvailable() ? "Available" : "Taken: " +
+	 * getSitterName()), position.x + nameOffset.x, position.y + nameOffset.y); }
+	 * return true; }
+	 */
 
 	@Override
 	public String toString() {

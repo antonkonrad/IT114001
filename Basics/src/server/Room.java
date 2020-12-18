@@ -11,12 +11,10 @@ import java.util.logging.Logger;
 
 ////added
 import client.Attack;
-import client.Chair;
 import client.Player;
 import client.Ship;
-import client.Ticket;
 import core.BaseGamePanel;
-import core.Helpers;
+import core.Countdown;
 
 public class Room extends BaseGamePanel implements AutoCloseable {
 	/**
@@ -32,8 +30,23 @@ public class Room extends BaseGamePanel implements AutoCloseable {
 	private final static String CREATE_ROOM = "createroom";
 	private final static String JOIN_ROOM = "joinroom";
 	private final static String READY = "ready";
+	private final static String AWAY = "away";
 	private List<ClientPlayer> clients = new ArrayList<ClientPlayer>();
 	static Dimension gameAreaSize = new Dimension(800, 800);
+	int[][] grid = new int[8][8];
+
+	public void checkGrid(int x, int y) {
+		if (grid[x][y] <= grid.length) {
+			if (grid[x][y] == grid[x][y]) {
+				System.out.println("Hit");
+				grid[x][y] = 1;
+			} else {
+				System.out.println("Miss");
+				grid[x][y] = 0;
+			}
+		}
+	}
+
 	private List<Ship> Ships = new ArrayList<Ship>(); ///// Ships are == Chairs (what you (Place))
 	private List<Attack> Attacks = new ArrayList<Attack>(); /////// Attacks == Tickets (what you (Pick))
 
@@ -64,147 +77,77 @@ public class Room extends BaseGamePanel implements AutoCloseable {
 		return startPos;
 	}
 
-	private void generateShips() {
-		int players = clients.size();
-		final int ships = Helpers.getNumberBetween(players, (int) (players * 3));
-		final Dimension shipSize = new Dimension(1, 3);
-		final float paddingLeft = .1f;
-		final float paddingRight = .9f;
-		final float paddingTop = .1f;
-		final float shipSpacing = shipSize.height * 1.75f;
-		final int shipHalfWidth = (int) (shipSize.width * .5);
-		final int screenWidth = gameAreaSize.width;
-		final int screenHeight = gameAreaSize.height;
-		for (int i = 0; i < ships; i++) {
-			Ship ship = new Ship("Ship " + (i));
-			Point shipPosition = new Point();
-			if (i % 2 == 0) {
-				shipPosition.x = (int) ((screenWidth * paddingRight) - shipHalfWidth);
-			} else {
-				shipPosition.x = (int) (screenWidth * paddingLeft);
-			}
-			shipPosition.y = (int) ((screenHeight * paddingTop) + (shipSpacing * (i / 2)));
-			ship.setPosition(shipPosition);
-			ship.setSize(shipSize.width, shipSize.height);
-			ship.setPlayer(null);
-			this.Ships.add(ship);
-		}
-
-	}
-
-	private void syncChairs() {
-		// fairest way seems to be syncing 1 chair at a time across all players
-		Iterator<Chair> chairIter = chairs.iterator();
-		while (chairIter.hasNext()) {
-			Chair chair = chairIter.next();
-			if (chair != null) {
-				syncChair(chair);
-			}
-		}
-	}
-
-	private void resetChairs() {
-		Iterator<ClientPlayer> iter = clients.iterator();
-		while (iter.hasNext()) {
-			ClientPlayer cp = iter.next();
-			if (cp != null) {
-				if (cp.player.isSitting()) {
-					cp.player.unsit();
-				}
-				cp.client.sendChair(null, null, null, null);
-			}
-		}
-		Iterator<Chair> citer = chairs.iterator();
-		while (citer.hasNext()) {
-			citer.next();
-			citer.remove();
-		}
-	}
-
-	private void generateAttacks() {
-		int players = clients.size() + 1;
-		final int tickets = Helpers.getNumberBetween(players, (int) (players * 1.5));
-		final int screenWidth = gameAreaSize.width;
-		final int screenHeight = gameAreaSize.height;
-		final float paddingLeft = .3f;
-		final float paddingRight = .7f;
-		final float paddingTop = .3f;
-		final float paddingBottom = .7f;
-		Dimension ticketSize = new Dimension(30, 20);
-		System.out.println("Tickets to be made: " + tickets);
-		for (int i = 0; i < tickets; i++) {
-			// TODO: Note to self - keep # in the name, will use it to split to get ticket
-			// value for now
-			Ticket ticket = new Ticket("#" + (i + 1) + "-" + Helpers.getNumberBetween(1, 10));
-			Point ticketPosition = new Point();
-			ticket.setPlayer(null);
-			ticketPosition.x = Helpers.getNumberBetween((int) (screenWidth * paddingLeft),
-					(int) (screenWidth * paddingRight));
-			ticketPosition.y = Helpers.getNumberBetween((int) (screenHeight * paddingTop),
-					(int) (screenHeight * paddingBottom));
-			ticket.setPosition(ticketPosition);
-			ticket.setSize(ticketSize.width, ticketSize.height);
-			this.tickets.add(ticket);
-		}
-		System.out.println("Tickets made: " + this.tickets.size());
-	}
-
-	private void syncTickets() {
-		// fairest way seems to be syncing 1 ticket at a time across all players
-		Iterator<Ticket> ticketIter = tickets.iterator();
-		while (ticketIter.hasNext()) {
-			Ticket ticket = ticketIter.next();
-			if (ticket != null) {
-				syncTicket(ticket);
-			}
-		}
-	}
-
-	private void resetTickets() {
-		Iterator<ClientPlayer> iter = clients.iterator();
-		while (iter.hasNext()) {
-			ClientPlayer cp = iter.next();
-			if (cp != null) {
-				if (cp.player.hasTicket()) {
-					cp.player.takeTicket();
-				}
-				cp.client.sendTicket(null, null, null, null);
-			}
-		}
-		Iterator<Ticket> ticketIterator = tickets.iterator();
-		while (ticketIterator.hasNext()) {
-			ticketIterator.next();
-			ticketIterator.remove();
-		}
-	}
-
-	private void syncTicket(Ticket ticket) {
-		if (ticket != null) {
-			Iterator<ClientPlayer> iter = clients.iterator();
-			while (iter.hasNext()) {
-				ClientPlayer cp = iter.next();
-				if (cp != null) {
-					// changed to pass holder name
-					cp.client.sendTicket(ticket.getName(), ticket.getPosition(), ticket.getSize(),
-							ticket.getHolderName());
-				}
-			}
-		}
-	}
-
-	private void syncChair(Chair chair) {
-		if (chair != null) {
-			Iterator<ClientPlayer> iter = clients.iterator();
-			while (iter.hasNext()) {
-				ClientPlayer cp = iter.next();
-				if (cp != null) {
-					// changed to pass holder name
-					cp.client.sendChair(chair.getName(), chair.getPosition(), chair.getSize(), chair.getSitterName());
-				}
-			}
-		}
-	}
-
+	/*
+	 * private void generateShips() { int players = clients.size(); final int ships
+	 * = Helpers.getNumberBetween(players, (int) (players * 3)); final Dimension
+	 * shipSize = new Dimension(1, 3); final float paddingLeft = .1f; final float
+	 * paddingRight = .9f; final float paddingTop = .1f; final float shipSpacing =
+	 * shipSize.height * 1.75f; final int shipHalfWidth = (int) (shipSize.width *
+	 * .5); final int screenWidth = gameAreaSize.width; final int screenHeight =
+	 * gameAreaSize.height; for (int i = 0; i < ships; i++) { Ship ship = new
+	 * Ship("Ship " + (i)); Point shipPosition = new Point(); if (i % 2 == 0) {
+	 * shipPosition.x = (int) ((screenWidth * paddingRight) - shipHalfWidth); } else
+	 * { shipPosition.x = (int) (screenWidth * paddingLeft); } shipPosition.y =
+	 * (int) ((screenHeight * paddingTop) + (shipSpacing * (i / 2)));
+	 * ship.setPosition(shipPosition); ship.setSize(shipSize.width,
+	 * shipSize.height); ship.setPlayer(null); this.Ships.add(ship); }
+	 * 
+	 * }
+	 * 
+	 * private void syncChairs() { // fairest way seems to be syncing 1 chair at a
+	 * time across all players Iterator<Chair> chairIter = chairs.iterator(); while
+	 * (chairIter.hasNext()) { Chair chair = chairIter.next(); if (chair != null) {
+	 * syncChair(chair); } } }
+	 * 
+	 * private void resetChairs() { Iterator<ClientPlayer> iter =
+	 * clients.iterator(); while (iter.hasNext()) { ClientPlayer cp = iter.next();
+	 * if (cp != null) { if (cp.player.isSitting()) { cp.player.unsit(); }
+	 * cp.client.sendChair(null, null, null, null); } } Iterator<Chair> citer =
+	 * chairs.iterator(); while (citer.hasNext()) { citer.next(); citer.remove(); }
+	 * }
+	 * 
+	 * private void generateAttacks() { int players = clients.size() + 1; final int
+	 * tickets = Helpers.getNumberBetween(players, (int) (players * 1.5)); final int
+	 * screenWidth = gameAreaSize.width; final int screenHeight =
+	 * gameAreaSize.height; final float paddingLeft = .3f; final float paddingRight
+	 * = .7f; final float paddingTop = .3f; final float paddingBottom = .7f;
+	 * Dimension ticketSize = new Dimension(30, 20);
+	 * System.out.println("Tickets to be made: " + tickets); for (int i = 0; i <
+	 * tickets; i++) { // TODO: Note to self - keep # in the name, will use it to
+	 * split to get ticket // value for now Ticket ticket = new Ticket("#" + (i + 1)
+	 * + "-" + Helpers.getNumberBetween(1, 10)); Point ticketPosition = new Point();
+	 * ticket.setPlayer(null); ticketPosition.x = Helpers.getNumberBetween((int)
+	 * (screenWidth * paddingLeft), (int) (screenWidth * paddingRight));
+	 * ticketPosition.y = Helpers.getNumberBetween((int) (screenHeight *
+	 * paddingTop), (int) (screenHeight * paddingBottom));
+	 * ticket.setPosition(ticketPosition); ticket.setSize(ticketSize.width,
+	 * ticketSize.height); this.tickets.add(ticket); }
+	 * System.out.println("Tickets made: " + this.tickets.size()); }
+	 * 
+	 * private void syncTickets() { // fairest way seems to be syncing 1 ticket at a
+	 * time across all players Iterator<Ticket> ticketIter = tickets.iterator();
+	 * while (ticketIter.hasNext()) { Ticket ticket = ticketIter.next(); if (ticket
+	 * != null) { syncTicket(ticket); } } }
+	 * 
+	 * private void resetTickets() { Iterator<ClientPlayer> iter =
+	 * clients.iterator(); while (iter.hasNext()) { ClientPlayer cp = iter.next();
+	 * if (cp != null) { if (cp.player.hasTicket()) { cp.player.takeTicket(); }
+	 * cp.client.sendTicket(null, null, null, null); } } Iterator<Ticket>
+	 * ticketIterator = tickets.iterator(); while (ticketIterator.hasNext()) {
+	 * ticketIterator.next(); ticketIterator.remove(); } }
+	 * 
+	 * private void syncTicket(Ticket ticket) { if (ticket != null) {
+	 * Iterator<ClientPlayer> iter = clients.iterator(); while (iter.hasNext()) {
+	 * ClientPlayer cp = iter.next(); if (cp != null) { // changed to pass holder
+	 * name cp.client.sendTicket(ticket.getName(), ticket.getPosition(),
+	 * ticket.getSize(), ticket.getHolderName()); } } } }
+	 * 
+	 * private void syncChair(Chair chair) { if (chair != null) {
+	 * Iterator<ClientPlayer> iter = clients.iterator(); while (iter.hasNext()) {
+	 * ClientPlayer cp = iter.next(); if (cp != null) { // changed to pass holder
+	 * name cp.client.sendChair(chair.getName(), chair.getPosition(),
+	 * chair.getSize(), chair.getSitterName()); } } } }
+	 */
 ///////////added
 	private void syncGameSize() {
 		Iterator<ClientPlayer> iter = clients.iterator();
@@ -355,87 +298,49 @@ public class Room extends BaseGamePanel implements AutoCloseable {
 		}
 	}
 
-	private boolean takeASeat(ClientPlayer cp) {
-		if (cp.player.hasTicket()) {
-			// check seats since we have a ticket in hand
-			Iterator<Chair> iter = chairs.iterator();
-			while (iter.hasNext()) {
-				Chair c = iter.next();
-				if (c != null && c.isAvailable()) {
-					int dist = (int) ((c.getSize().width * .5) + (cp.player.getSize().width * .5));
-					Point p = cp.player.getCenter();
-					Point chairp = c.getCenter();
-
-					if (chairp.distanceSq(p) <= (dist * dist)) {
-						// chair is within range, do the sit :)
-						c.setPlayer(cp.player);
-						cp.player.setChair(c);
-						syncChair(c);
-						return true;
-					}
-
-				}
-			}
-		}
-		return false;
-	}
-
-	protected synchronized void doPickup(ServerThread client) {
-		ClientPlayer cp = getCP(client);
-		if (cp != null) {
-			// TODO reject too frequent request (keep this value in sync with client)
-			// ignore requests quicker than 500ms
-			long currentMs = System.currentTimeMillis();
-			if (cp.player.getLastAction() > 0L && (currentMs - cp.player.getLastAction()) < 500) {
-				return;
-			}
-			cp.player.setLastAction(currentMs);
-			if (takeASeat(cp)) {
-				// we sat or are sitting, no need to do anything else
-				return;
-			}
-			Iterator<Ticket> iter = tickets.iterator();
-			Ticket currentlyHeld = cp.player.takeTicket();
-			String chName = null;
-			// drop current ticket
-			if (currentlyHeld != null) {
-				chName = currentlyHeld.getName();
-				currentlyHeld.setPlayer(null);
-				currentlyHeld.setPosition(cp.player.getPosition());
-				syncTicket(currentlyHeld);
-			}
-			while (iter.hasNext()) {
-				Ticket t = iter.next();
-				try {
-					if (t != null && t.isAvailable() && !t.getName().equalsIgnoreCase(chName)) {
-
-						Point p = cp.player.getCenter();
-						Point tp = t.getCenter();
-						System.out.println(getName());
-						System.out.println("P: " + p);
-						System.out.println("T: " + tp);
-						System.out.println("Dist: " + tp.distance(p));
-						// add the two halfwidths together to get the max distance between the two until
-						// a collision occurs
-						int dist = (int) ((t.getSize().height * .5) + (cp.player.getSize().width * .5));
-
-						// NOTE:
-						// same as below IF: if(tp.distance(p) <= dist)
-						// (more expensive - calcs square root)
-						if (tp.distanceSq(p) <= (dist * dist)) { // (cheaper - doesn't need to calc square root)
-							// ticket is within range, do the exchange/pickup
-							t.setPlayer(cp.player);
-							cp.player.setTicket(t);
-							syncTicket(t);
-							break;
-						}
-					}
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		}
-	}
+	/*
+	 * private boolean takeASeat(ClientPlayer cp) { if (cp.player.hasTicket()) { //
+	 * check seats since we have a ticket in hand Iterator<Chair> iter =
+	 * chairs.iterator(); while (iter.hasNext()) { Chair c = iter.next(); if (c !=
+	 * null && c.isAvailable()) { int dist = (int) ((c.getSize().width * .5) +
+	 * (cp.player.getSize().width * .5)); Point p = cp.player.getCenter(); Point
+	 * chairp = c.getCenter();
+	 * 
+	 * if (chairp.distanceSq(p) <= (dist * dist)) { // chair is within range, do the
+	 * sit :) c.setPlayer(cp.player); cp.player.setChair(c); syncChair(c); return
+	 * true; }
+	 * 
+	 * } } } return false; }
+	 * 
+	 * protected synchronized void doPickup(ServerThread client) { ClientPlayer cp =
+	 * getCP(client); if (cp != null) { // TODO reject too frequent request (keep
+	 * this value in sync with client) // ignore requests quicker than 500ms long
+	 * currentMs = System.currentTimeMillis(); if (cp.player.getLastAction() > 0L &&
+	 * (currentMs - cp.player.getLastAction()) < 500) { return; }
+	 * cp.player.setLastAction(currentMs); if (takeASeat(cp)) { // we sat or are
+	 * sitting, no need to do anything else return; } Iterator<Ticket> iter =
+	 * tickets.iterator(); Ticket currentlyHeld = cp.player.takeTicket(); String
+	 * chName = null; // drop current ticket if (currentlyHeld != null) { chName =
+	 * currentlyHeld.getName(); currentlyHeld.setPlayer(null);
+	 * currentlyHeld.setPosition(cp.player.getPosition());
+	 * syncTicket(currentlyHeld); } while (iter.hasNext()) { Ticket t = iter.next();
+	 * try { if (t != null && t.isAvailable() &&
+	 * !t.getName().equalsIgnoreCase(chName)) {
+	 * 
+	 * Point p = cp.player.getCenter(); Point tp = t.getCenter();
+	 * System.out.println(getName()); System.out.println("P: " + p);
+	 * System.out.println("T: " + tp); System.out.println("Dist: " +
+	 * tp.distance(p)); // add the two halfwidths together to get the max distance
+	 * between the two until // a collision occurs int dist = (int)
+	 * ((t.getSize().height * .5) + (cp.player.getSize().width * .5));
+	 * 
+	 * // NOTE: // same as below IF: if(tp.distance(p) <= dist) // (more expensive -
+	 * calcs square root) if (tp.distanceSq(p) <= (dist * dist)) { // (cheaper -
+	 * doesn't need to calc square root) // ticket is within range, do the
+	 * exchange/pickup t.setPlayer(cp.player); cp.player.setTicket(t);
+	 * syncTicket(t); break; } } } catch (Exception e) { e.printStackTrace(); } } }
+	 * }
+	 */
 
 	private ClientPlayer getCP(ServerThread client) {
 		Iterator<ClientPlayer> iter = clients.iterator();
@@ -487,12 +392,22 @@ public class Room extends BaseGamePanel implements AutoCloseable {
 					response = "Ready to go!";
 
 					break;
-				case "reset":// TODO for testing purposes, don't forget to delete when done testing
-					resetChairs();
-					resetTickets();
-					break;
-				case "start":// TODO for testing purposes, don't forget to delete when done testing
-					readyCheck();
+				// case "reset":// TODO for testing purposes, don't forget to delete when done
+				// testing
+				// resetChairs();
+				// resetTickets();
+				// break;
+				// case "start":// TODO for testing purposes, don't forget to delete when done
+				// testing
+				// readyCheck();
+				// break;
+				case AWAY:
+					cp = getCP(client);
+					if (cp != null) {
+						cp.player.setLocked(true);
+						awayNow();
+					}
+					response = "Not ready to go. ";
 					break;
 				default:
 					// not a command, let's fix this function from eating messages
@@ -509,6 +424,20 @@ public class Room extends BaseGamePanel implements AutoCloseable {
 		return response;
 	}
 
+	private void awayNow() {
+		Iterator<ClientPlayer> iter = clients.iterator();
+		int total = clients.size();
+		int notReady = 0;
+		while (iter.hasNext()) {
+			ClientPlayer cp = iter.next();
+			if (cp != null && cp.player.isLocked()) {
+				notReady++;
+			}
+		}
+		if (notReady > 0)
+			System.out.println("Everyone is not ready to play.");
+	}
+
 	private void readyCheck() {
 		Iterator<ClientPlayer> iter = clients.iterator();
 		int total = clients.size();
@@ -519,15 +448,15 @@ public class Room extends BaseGamePanel implements AutoCloseable {
 				ready++;
 			}
 		}
-		if (ready >= total && chairs.size() == 0) {
+		if (ready >= total /* && chairs.size() == 0 */) {
 			// start
 			System.out.println("Everyone's ready, let's do this!");
-			resetChairs();
-			resetTickets();
-			generateSeats();
-			generateTickets();
-			syncChairs();
-			syncTickets();
+			// resetChairs();
+			// resetTickets();
+			// generateSeats();
+			// generateTickets();
+			// syncChairs();
+			// syncTickets();
 			sendSystemMessage("Let the games begin!");
 		}
 	}
@@ -668,6 +597,63 @@ public class Room extends BaseGamePanel implements AutoCloseable {
 		// should be eligible for garbage collection now
 	}
 
+	void nextRound(String message, int duration) {
+		// resetChairs();
+		// resetTickets();
+		int numReady = totalReady();
+		if (numReady > 0) {
+			// if (roundTimer(0) || clients.setShip(3)) {
+
+			// generateSeats();
+			// generateTickets();
+			// syncChairs();
+			// syncTickets();
+			Iterator<ClientPlayer> iter = clients.iterator();
+			while (iter.hasNext()) {
+				ClientPlayer cp = iter.next();
+				if (cp != null) {
+					sendPositionSync(cp.client, cp.player.getPosition());
+					sendDirectionSync(cp.client, new Point(0, 0));
+
+				}
+			}
+
+			sendToggleLockPosition(false);
+			// chairIndex = -1;
+			// lastChairIndex = -1;
+			// TODO countdown to trigger ticket collection
+			// set it server side
+			new Countdown(message, duration, (x) -> {
+				// nextChair();
+			});
+			// set it client side (for visual countdown)
+			sendCountdown(message, duration);
+		} else {
+			sendSystemMessage("Ending game due to no more 'ready' players");
+		}
+	}
+
+	private void sendToggleLockPosition(boolean b) {
+		// TODO Auto-generated method stub
+
+	}
+
+	private int totalReady() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	protected void sendCountdown(String message, int duration) {
+		Iterator<ClientPlayer> iter = clients.iterator();
+		while (iter.hasNext()) {
+			ClientPlayer client = iter.next();
+			boolean messageSent = client.client.sendCountdown(message, duration);
+			if (!messageSent) {
+				iter.remove();
+			}
+		}
+	}
+
 	@Override
 	public void awake() {
 		// TODO Auto-generated method stub
@@ -732,7 +718,7 @@ public class Room extends BaseGamePanel implements AutoCloseable {
 
 	@Override
 	public void draw(Graphics g) {
-		// this is the server, we won't be using this unless you're adding this view to
+		// this is the server, we won't busing this unless you're adding this view to
 		// the Honor's student extra section
 	}
 

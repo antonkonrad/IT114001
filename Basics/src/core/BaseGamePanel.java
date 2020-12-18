@@ -95,11 +95,12 @@ public abstract class BaseGamePanel extends JPanel {
 	public abstract void quit();
 
 	// triggers the draw method
+
 	@Override
 	public void paintComponent(Graphics g) {
-		super.paintComponent(g); // paint parent's background
-		draw(g);
+		super.paintComponent(g);
 	}
+	// paint parent's background draw(g); }
 
 	// forces subclasses to determine listeners
 	public abstract void attachListeners();
